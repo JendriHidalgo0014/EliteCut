@@ -43,9 +43,11 @@ android {
         compose = true
     }
 
-    room {
-        schemaDirectory("$projectDir/schemas")
-    }
+
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 // Reemplazo de kotlinOptions para AGP 9.0 built-in Kotlin
@@ -100,6 +102,7 @@ dependencies {
 
     // ── Utils ──
     implementation(libs.gson)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // ── WorkManager ──
     implementation(libs.work.runtime.ktx)
