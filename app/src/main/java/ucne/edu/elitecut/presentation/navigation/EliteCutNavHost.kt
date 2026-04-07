@@ -7,6 +7,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import ucne.edu.elitecut.presentation.tareas.auth.login.LoginScreen
 import ucne.edu.elitecut.presentation.tareas.auth.register.RegisterScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.agendarCita.AgendarCitaScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.clienteHome.HomeScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.galeria.GaleriaScreen
 
 @Composable
 fun EliteCutNavHost(
@@ -52,7 +55,20 @@ fun EliteCutNavHost(
         // ========================
 
         composable<Screen.ClienteHome> {
-            // TODO: ClienteHomeScreen
+            HomeScreen(
+                onBarberoClick = { barberoId ->
+                    navController.navigate(Screen.GaleriaEstilos(barberoId))
+                },
+                onNavigateToCitas = {
+                    navController.navigate(Screen.MisCitas)
+                },
+                onNavigateToSoporte = {
+                    navController.navigate(Screen.Soporte)
+                },
+                onNavigateToPerfil = {
+                    navController.navigate(Screen.PerfilCliente)
+                }
+            )
         }
 
         composable<Screen.BarberoDetalle> { backStackEntry ->
@@ -62,12 +78,22 @@ fun EliteCutNavHost(
 
         composable<Screen.GaleriaEstilos> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.GaleriaEstilos>()
-            // TODO: GaleriaEstilosScreen(barberoId = args.barberoId)
+            GaleriaScreen(
+                onAgendarClick = { barberoId ->
+                    navController.navigate(Screen.AgendarCita(barberoId))
+                },
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.AgendarCita> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.AgendarCita>()
-            // TODO: AgendarCitaScreen(barberoId = args.barberoId)
+            AgendarCitaScreen(
+                onContinuarAlPago = { citaId ->
+                    navController.navigate(Screen.MetodoPago(citaId))
+                },
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.MetodoPago> { backStackEntry ->
