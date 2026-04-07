@@ -57,9 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.elitecut.ui.theme.MaterialTheme
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @Composable
 fun RegisterScreen(
@@ -371,12 +368,16 @@ fun RegisterBody(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Date Picker Dialog
         if (state.showDatePicker) {
             val datePickerState = rememberDatePickerState(
                 selectableDates = object : SelectableDates {
                     override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        return utcTimeMillis >= System.currentTimeMillis() - 86400000
+                        // Usar inicio del día de hoy en UTC para comparación correcta
+                        val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
+                            .atStartOfDay(java.time.ZoneOffset.UTC)
+                            .toInstant()
+                            .toEpochMilli()
+                        return utcTimeMillis >= todayUtc
                     }
                 }
             )
@@ -387,9 +388,14 @@ fun RegisterBody(
                     TextButton(
                         onClick = {
                             datePickerState.selectedDateMillis?.let { millis ->
-                                val formatter = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-                                val date = formatter.format(Date(millis))
-                                onEvent(RegisterUiEvent.OnFechaIngresoChange(date))
+                                // Usar UTC para evitar desfase de un día
+                                val date = java.time.Instant.ofEpochMilli(millis)
+                                    .atZone(java.time.ZoneOffset.UTC)
+                                    .toLocalDate()
+                                val formatted = date.format(
+                                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                )
+                                onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
                             }
                         }
                     ) {
