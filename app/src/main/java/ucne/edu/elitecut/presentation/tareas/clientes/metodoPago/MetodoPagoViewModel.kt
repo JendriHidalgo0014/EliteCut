@@ -1,0 +1,102 @@
+package ucne.edu.elitecut.presentation.tareas.clientes.metodoPago
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import ucne.edu.elitecut.data.remote.Resource
+import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoEstablecimientoUseCase
+import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoTarjetaUseCase
+import javax.inject.Inject
+
+@HiltViewModel
+class MetodoPagoViewModel @Inject constructor(
+    private val pagoTarjetaUseCase: PagoTarjetaUseCase,
+    private val pagoEstablecimientoUseCase: PagoEstablecimientoUseCase,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    private val citaId: String = savedStateHandle["citaId"] ?: ""
+
+    private val _state = MutableStateFlow(MetodoPagoUiState(citaId = citaId))
+    val state: StateFlow<MetodoPagoUiState> = _state.asStateFlow()
+
+    fun onEvent(event: MetodoPagoUiEvent) {
+        when (event) {
+            is MetodoPagoUiEvent.OnMetodoSelect -> _state.update { it.copy(metodoSeleccionado = event.metodo) }
+            is MetodoPagoUiEvent.OnNombreTitularChange -> _state.update { it.copy(nombreTitular = event.nombre) }
+            is MetodoPagoUiEvent.OnNumeroTarjetaChange -> _state.update { it.copy(numeroTarjeta = event.numero) }
+            is MetodoPagoUiEvent.OnVencimientoChange -> _state.update { it.copy(vencimiento = event.vencimiento) }
+            is MetodoPagoUiEvent.OnCvvChange -> _state.update { it.copy(cvv = event.cvv) }
+            is MetodoPagoUiEvent.OnMontoChange -> _state.update { it.copy(monto = event.monto) }
+            is MetodoPagoUiEvent.ProcesarPago -> procesarPago()
+            is MetodoPagoUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
+        }
+    }
+
+    private fun procesarPago() = viewModelScope.launch {
+        val current = _state.value
+
+        if (current.metodoSeleccionado == "TARJETA") {
+            if (current.nombreTitular.isBlank()) {
+                _state.update { it.copy(userMessage = "El nombre del titular es obligatorio") }
+                return@launch
+            }
+            if (current.numeroTarjeta.length < 16) {
+                _state.update { it.copy(userMessage = "El número de tarjeta debe tener 16 dígitos") }
+                return@launch
+            }
+            if (current.vencimiento.isBlank()) {
+                _state.update { it.copy(userMessage = "La fecha de vencimiento es obligatoria") }
+                return@launch
+            }
+            if (current.cvv.length < 3) {
+                _state.update { it.copy(userMessage = "El CVV debe tener al menos 3 dígitos") }
+                return@launch
+            }
+        }
+
+        _state.update { it.copy(isLoading = true) }
+
+        val citaIdInt = current.citaId.toIntOrNull() ?: 0
+
+        if (current.metodoSeleccionado == "TARJETA") {
+            val monto = current.monto.toDoubleOrNull() ?: 500.0
+            when (val result = pagoTarjetaUseCase(
+                citaIdInt, current.nombreTitular, current.numeroTarjeta,
+                current.vencimiento, current.cvv, monto
+            )) {
+                is Resource.Success -> {
+                    _state.update {
+                        it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago procesado exitosamente")
+                    }
+                }
+                is Resource.Error -> {
+                    _state.update {
+                        it.copy(isLoading = false, userMessage = result.message ?: "Error al procesar pago")
+                    }
+                }
+                else -> {}
+            }
+        } else {
+            when (val result = pagoEstablecimientoUseCase(citaIdInt)) {
+                is Resource.Success -> {
+                    _state.update {
+                        it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago en establecimiento registrado")
+                    }
+                }
+                is Resource.Error -> {
+                    _state.update {
+                        it.copy(isLoading = false, userMessage = result.message ?: "Error al registrar pago")
+                    }
+                }
+                else -> {}
+            }
+        }
+    }
+}
