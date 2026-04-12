@@ -49,8 +49,9 @@ class MisCitasViewModel @Inject constructor(
 
     private fun syncFromApi() = viewModelScope.launch {
         when (val result = syncMisCitasUseCase()) {
+            is Resource.Success -> _state.update { it.copy(isLoading = false) }
             is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message) }
-            else -> _state.update { it.copy(isLoading = false) }
+            is Resource.Loading -> Unit
         }
     }
 
@@ -58,7 +59,7 @@ class MisCitasViewModel @Inject constructor(
         when (val result = cambiarEstadoCitaUseCase(citaId, "CANCELADA")) {
             is Resource.Success -> _state.update { it.copy(userMessage = "Cita cancelada") }
             is Resource.Error -> _state.update { it.copy(userMessage = result.message) }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
