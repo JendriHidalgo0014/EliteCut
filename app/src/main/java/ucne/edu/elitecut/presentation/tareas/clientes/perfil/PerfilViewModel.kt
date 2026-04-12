@@ -22,9 +22,7 @@ class PerfilViewModel @Inject constructor(
     private val _state = MutableStateFlow(PerfilUiState(isLoading = true))
     val state: StateFlow<PerfilUiState> = _state.asStateFlow()
 
-    init {
-        loadProfile()
-    }
+    init { loadProfile() }
 
     fun onEvent(event: PerfilUiEvent) {
         when (event) {
@@ -35,20 +33,14 @@ class PerfilViewModel @Inject constructor(
     }
 
     private fun loadProfile() = viewModelScope.launch {
-        val nombre = tokenManager.getUserName() ?: ""
-        val correo = tokenManager.getUserCorreo() ?: ""
-        val telefono = tokenManager.getUserTelefono() ?: ""
-        val fechaIngreso = tokenManager.getUserFechaIngreso() ?: ""
-        val rol = tokenManager.getUserRole() ?: ""
-
         _state.update {
             it.copy(
                 isLoading = false,
-                nombre = nombre,
-                correo = correo,
-                telefono = telefono,
-                fechaIngreso = fechaIngreso,
-                rol = rol
+                nombre = tokenManager.getUserName() ?: "",
+                correo = tokenManager.getUserCorreo() ?: "",
+                telefono = tokenManager.getUserTelefono() ?: "",
+                fechaIngreso = tokenManager.getUserFechaIngreso() ?: "",
+                rol = tokenManager.getUserRole() ?: ""
             )
         }
     }
@@ -56,13 +48,9 @@ class PerfilViewModel @Inject constructor(
     private fun logout() = viewModelScope.launch {
         _state.update { it.copy(isLoading = true) }
         when (logoutUseCase()) {
-            is Resource.Success -> {
-                _state.update { it.copy(isLoading = false, isLoggedOut = true) }
-            }
-            is Resource.Error -> {
-                _state.update { it.copy(isLoading = false, isLoggedOut = true) }
-            }
-            else -> {}
+            is Resource.Success -> _state.update { it.copy(isLoading = false, isLoggedOut = true) }
+            is Resource.Error -> _state.update { it.copy(isLoading = false, isLoggedOut = true) }
+            is Resource.Loading -> Unit
         }
     }
 }
