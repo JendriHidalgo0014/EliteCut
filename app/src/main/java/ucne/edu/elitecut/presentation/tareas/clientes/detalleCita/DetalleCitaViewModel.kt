@@ -26,9 +26,7 @@ class DetalleCitaViewModel @Inject constructor(
     private val _state = MutableStateFlow(DetalleCitaUiState(isLoading = true))
     val state: StateFlow<DetalleCitaUiState> = _state.asStateFlow()
 
-    init {
-        loadCita()
-    }
+    init { loadCita() }
 
     fun onEvent(event: DetalleCitaUiEvent) {
         when (event) {
@@ -45,7 +43,7 @@ class DetalleCitaViewModel @Inject constructor(
             is Resource.Error -> {
                 _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 
@@ -54,20 +52,13 @@ class DetalleCitaViewModel @Inject constructor(
         when (val result = cambiarEstadoCitaUseCase(citaId, "CANCELADA")) {
             is Resource.Success -> {
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        cita = result.data,
-                        citaCancelada = true,
-                        userMessage = "Cita cancelada exitosamente"
-                    )
+                    it.copy(isLoading = false, cita = result.data, citaCancelada = true, userMessage = "Cita cancelada exitosamente")
                 }
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(isLoading = false, userMessage = result.message)
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
