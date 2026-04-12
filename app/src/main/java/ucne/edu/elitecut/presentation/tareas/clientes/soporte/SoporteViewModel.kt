@@ -29,30 +29,38 @@ class SoporteViewModel @Inject constructor(
     val state: StateFlow<SoporteUiState> = _state.asStateFlow()
 
     init {
-        observeMensajes()
-        syncFromApi()
+        loadUserId()
     }
 
     fun onEvent(event: SoporteUiEvent) {
         when (event) {
             is SoporteUiEvent.OnMensajeChange -> _state.update { it.copy(mensajeInput = event.mensaje) }
             is SoporteUiEvent.EnviarMensaje -> enviarMensaje()
-            is SoporteUiEvent.LoadMensajes -> syncFromApi()
+            is SoporteUiEvent.LoadConversacion -> loadConversacion()
             is SoporteUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
         }
     }
 
-    private fun observeMensajes() = viewModelScope.launch {
-        val userId = tokenManager.getUserId()?.toString() ?: return@launch
+    private fun loadUserId() = viewModelScope.launch {
+        val userId = tokenManager.getUserId()
+        _state.update { it.copy(userId = userId) }
+        observeMensajesLocales()
+        loadConversacion()
+    }
+
+    private fun observeMensajesLocales() = viewModelScope.launch {
+        val userId = _state.value.userId?.toString() ?: return@launch
         observeMisMensajesUseCase(userId).collect { mensajes ->
-            _state.update { it.copy(isLoading = false, mensajes = mensajes) }
+            _state.update { it.copy(mensajesLocales = mensajes) }
         }
     }
 
-    private fun syncFromApi() = viewModelScope.launch {
+    private fun loadConversacion() = viewModelScope.launch {
+        _state.update { it.copy(isLoading = true) }
         when (val result = syncMisMensajesUseCase()) {
+            is Resource.Success -> _state.update { it.copy(isLoading = false) }
             is Resource.Error -> _state.update { it.copy(isLoading = false) }
-            else -> _state.update { it.copy(isLoading = false) }
+            else -> {}
         }
     }
 
@@ -68,20 +76,14 @@ class SoporteViewModel @Inject constructor(
         when (val result = enviarMensajeUseCase(contenido)) {
             is Resource.Success -> {
                 _state.update {
-                    it.copy(
-                        isSending = false,
-                        mensajeInput = "",
-                        userMessage = "Mensaje enviado"
-                    )
+                    it.copy(isSending = false, mensajeInput = "", userMessage = "Mensaje enviado")
                 }
                 triggerMensajeSyncUseCase()
+                loadConversacion()
             }
             is Resource.Error -> {
                 _state.update {
-                    it.copy(
-                        isSending = false,
-                        userMessage = result.message ?: "Error al enviar mensaje"
-                    )
+                    it.copy(isSending = false, userMessage = result.message ?: "Error al enviar mensaje")
                 }
             }
             else -> {}
