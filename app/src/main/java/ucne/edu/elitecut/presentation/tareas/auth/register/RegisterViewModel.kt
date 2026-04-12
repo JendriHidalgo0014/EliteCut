@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.AuthUseCase.RegisterUseCase
+import ucne.edu.elitecut.domain.validation.upsertRegistro
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,37 +41,12 @@ class RegisterViewModel @Inject constructor(
     private fun register() = viewModelScope.launch {
         val current = _state.value
 
-        // Validaciones
-        if (current.nombre.isBlank()) {
-            _state.update { it.copy(userMessage = "El nombre es obligatorio") }
-            return@launch
-        }
-        if (current.telefono.isBlank()) {
-            _state.update { it.copy(userMessage = "El teléfono es obligatorio") }
-            return@launch
-        }
-        if (current.fechaIngreso.isBlank()) {
-            _state.update { it.copy(userMessage = "La fecha de ingreso es obligatoria") }
-            return@launch
-        }
-        if (current.correo.isBlank()) {
-            _state.update { it.copy(userMessage = "El correo es obligatorio") }
-            return@launch
-        }
-        if (!current.correo.endsWith("@gmail.com")) {
-            _state.update { it.copy(userMessage = "Solo se permiten correos @gmail.com") }
-            return@launch
-        }
-        if (current.password.isBlank()) {
-            _state.update { it.copy(userMessage = "La contraseña es obligatoria") }
-            return@launch
-        }
-        if (current.password.length < 6) {
-            _state.update { it.copy(userMessage = "La contraseña debe tener al menos 6 caracteres") }
-            return@launch
-        }
-        if (current.password != current.confirmarPassword) {
-            _state.update { it.copy(userMessage = "Las contraseñas no coinciden") }
+        val validation = upsertRegistro(
+            current.nombre, current.telefono, current.fechaIngreso,
+            current.correo, current.password, current.confirmarPassword
+        )
+        if (!validation.isValid) {
+            _state.update { it.copy(userMessage = validation.error) }
             return@launch
         }
 
@@ -81,23 +57,12 @@ class RegisterViewModel @Inject constructor(
             current.correo, current.password, current.confirmarPassword
         )) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isRegistered = true,
-                        userMessage = "Registro exitoso"
-                    )
-                }
+                _state.update { it.copy(isLoading = false, isRegistered = true, userMessage = "Registro exitoso") }
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        userMessage = result.message ?: "Error al registrarse"
-                    )
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al registrarse") }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
