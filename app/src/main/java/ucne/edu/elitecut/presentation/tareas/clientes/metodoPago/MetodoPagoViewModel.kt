@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoEstablecimientoUseCase
 import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoTarjetaUseCase
+import ucne.edu.elitecut.domain.validation.upsertPagoTarjeta
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,20 +44,11 @@ class MetodoPagoViewModel @Inject constructor(
         val current = _state.value
 
         if (current.metodoSeleccionado == "TARJETA") {
-            if (current.nombreTitular.isBlank()) {
-                _state.update { it.copy(userMessage = "El nombre del titular es obligatorio") }
-                return@launch
-            }
-            if (current.numeroTarjeta.length < 16) {
-                _state.update { it.copy(userMessage = "El número de tarjeta debe tener 16 dígitos") }
-                return@launch
-            }
-            if (current.vencimiento.isBlank()) {
-                _state.update { it.copy(userMessage = "La fecha de vencimiento es obligatoria") }
-                return@launch
-            }
-            if (current.cvv.length < 3) {
-                _state.update { it.copy(userMessage = "El CVV debe tener al menos 3 dígitos") }
+            val validation = upsertPagoTarjeta(
+                current.nombreTitular, current.numeroTarjeta, current.vencimiento, current.cvv
+            )
+            if (!validation.isValid) {
+                _state.update { it.copy(userMessage = validation.error) }
                 return@launch
             }
         }
@@ -72,30 +64,22 @@ class MetodoPagoViewModel @Inject constructor(
                 current.vencimiento, current.cvv, monto
             )) {
                 is Resource.Success -> {
-                    _state.update {
-                        it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago procesado exitosamente")
-                    }
+                    _state.update { it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago procesado exitosamente") }
                 }
                 is Resource.Error -> {
-                    _state.update {
-                        it.copy(isLoading = false, userMessage = result.message ?: "Error al procesar pago")
-                    }
+                    _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al procesar pago") }
                 }
-                else -> {}
+                is Resource.Loading -> Unit
             }
         } else {
             when (val result = pagoEstablecimientoUseCase(citaIdInt)) {
                 is Resource.Success -> {
-                    _state.update {
-                        it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago en establecimiento registrado")
-                    }
+                    _state.update { it.copy(isLoading = false, pagoExitoso = true, userMessage = "Pago en establecimiento registrado") }
                 }
                 is Resource.Error -> {
-                    _state.update {
-                        it.copy(isLoading = false, userMessage = result.message ?: "Error al registrar pago")
-                    }
+                    _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al registrar pago") }
                 }
-                else -> {}
+                is Resource.Loading -> Unit
             }
         }
     }
