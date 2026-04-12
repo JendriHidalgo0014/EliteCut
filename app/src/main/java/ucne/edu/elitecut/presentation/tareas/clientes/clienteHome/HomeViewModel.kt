@@ -39,23 +39,15 @@ class HomeViewModel @Inject constructor(
 
     private fun observeBarberos() = viewModelScope.launch {
         observeBarberosUseCase().collect { barberos ->
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    barberos = barberos
-                )
-            }
+            _state.update { it.copy(isLoading = false, barberos = barberos) }
         }
     }
 
     private fun syncFromApi() = viewModelScope.launch {
         when (val result = syncBarberosUseCase()) {
-            is Resource.Error -> {
-                _state.update { it.copy(isLoading = false, userMessage = result.message) }
-            }
-            else -> {
-                _state.update { it.copy(isLoading = false) }
-            }
+            is Resource.Success -> _state.update { it.copy(isLoading = false) }
+            is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message) }
+            is Resource.Loading -> Unit
         }
     }
 }
