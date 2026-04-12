@@ -9,21 +9,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ucne.edu.elitecut.data.local.preferences.TokenManager
 import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.model.Cita
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.GetBarberoUseCase
-import ucne.edu.elitecut.domain.usecase.CitaUseCase.CrearCitaLocalUseCase
+import ucne.edu.elitecut.domain.usecase.CitaUseCase.CrearCitaRemotaUseCase
 import ucne.edu.elitecut.domain.usecase.CitaUseCase.GetHorariosDisponiblesUseCase
 import ucne.edu.elitecut.domain.usecase.CitaUseCase.TriggerCitaSyncUseCase
-
+import ucne.edu.elitecut.domain.validation.upsertAgendarCita
 import javax.inject.Inject
 
 @HiltViewModel
 class AgendarCitaViewModel @Inject constructor(
     private val getBarberoUseCase: GetBarberoUseCase,
-    private val crearCitaLocalUseCase: CrearCitaLocalUseCase,
+    private val crearCitaRemotaUseCase: CrearCitaRemotaUseCase,
     private val getHorariosDisponiblesUseCase: GetHorariosDisponiblesUseCase,
     private val triggerCitaSyncUseCase: TriggerCitaSyncUseCase,
+    private val tokenManager: TokenManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -42,9 +44,7 @@ class AgendarCitaViewModel @Inject constructor(
         )
     }
 
-    init {
-        loadBarbero()
-    }
+    init { loadBarbero() }
 
     fun onEvent(event: AgendarCitaUiEvent) {
         when (event) {
@@ -66,62 +66,44 @@ class AgendarCitaViewModel @Inject constructor(
     private fun loadBarbero() = viewModelScope.launch {
         when (val result = getBarberoUseCase(barberoId)) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        nombreBarbero = result.data?.nombre ?: "",
-                        horariosDisponibles = TODOS_LOS_HORARIOS
-                    )
-                }
+                _state.update { it.copy(isLoading = false, nombreBarbero = result.data?.nombre ?: "", horariosDisponibles = TODOS_LOS_HORARIOS) }
             }
             is Resource.Error -> {
                 _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 
     private fun loadHorariosDisponibles(fecha: String) = viewModelScope.launch {
         when (val result = getHorariosDisponiblesUseCase(barberoId, fecha)) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(horariosDisponibles = result.data?.horariosDisponibles ?: TODOS_LOS_HORARIOS)
-                }
+                _state.update { it.copy(horariosDisponibles = result.data?.horariosDisponibles ?: TODOS_LOS_HORARIOS) }
             }
             is Resource.Error -> {
                 _state.update { it.copy(horariosDisponibles = TODOS_LOS_HORARIOS) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 
     private fun crearCita() = viewModelScope.launch {
         val current = _state.value
 
-        if (current.nombre.isBlank()) {
-            _state.update { it.copy(userMessage = "El nombre es obligatorio") }
-            return@launch
-        }
-        if (current.edad.isBlank() || current.edad.toIntOrNull() == null) {
-            _state.update { it.copy(userMessage = "La edad es obligatoria") }
-            return@launch
-        }
-        if (current.telefono.isBlank()) {
-            _state.update { it.copy(userMessage = "El teléfono es obligatorio") }
-            return@launch
-        }
-        if (current.fechaCita.isBlank()) {
-            _state.update { it.copy(userMessage = "Selecciona una fecha para la cita") }
-            return@launch
-        }
-        if (current.horaCita.isBlank()) {
-            _state.update { it.copy(userMessage = "Selecciona un horario para la cita") }
+        val validation = upsertAgendarCita(
+            current.nombre, current.edad, current.telefono, current.fechaCita, current.horaCita
+        )
+        if (!validation.isValid) {
+            _state.update { it.copy(userMessage = validation.error) }
             return@launch
         }
 
         _state.update { it.copy(isLoading = true) }
 
+        val userId = tokenManager.getUserId()?.toString() ?: ""
+
         val cita = Cita(
+            clienteId = userId,
             barberoId = barberoId.toString(),
             nombreCliente = current.nombre,
             edadCliente = current.edad.toInt(),
@@ -131,24 +113,20 @@ class AgendarCitaViewModel @Inject constructor(
             nombreBarbero = current.nombreBarbero
         )
 
-        when (val result = crearCitaLocalUseCase(cita)) {
+        when (val result = crearCitaRemotaUseCase(cita)) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        citaCreada = true,
-                        citaId = result.data?.id ?: "",
-                        userMessage = "Cita guardada localmente"
-                    )
+                val remoteId = result.data ?: -1
+                if (remoteId > 0) {
+                    _state.update { it.copy(isLoading = false, citaCreada = true, citaId = remoteId.toString(), userMessage = "Cita creada exitosamente") }
+                } else {
+                    _state.update { it.copy(isLoading = false, citaCreadaOffline = true, userMessage = "Cita guardada localmente. Se sincronizará cuando haya conexión.") }
+                    triggerCitaSyncUseCase()
                 }
-                triggerCitaSyncUseCase()
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(isLoading = false, userMessage = result.message)
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
