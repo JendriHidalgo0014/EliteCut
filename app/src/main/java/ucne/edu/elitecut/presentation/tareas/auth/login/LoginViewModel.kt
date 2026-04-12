@@ -12,6 +12,7 @@ import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.AuthUseCase.GetUserRoleUseCase
 import ucne.edu.elitecut.domain.usecase.AuthUseCase.IsLoggedInUseCase
 import ucne.edu.elitecut.domain.usecase.AuthUseCase.LoginUseCase
+import ucne.edu.elitecut.domain.validation.upsertLogin
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,9 +25,7 @@ class LoginViewModel @Inject constructor(
     private val _state = MutableStateFlow(LoginUiState(isLoading = true))
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
-    init {
-        checkSession()
-    }
+    init { checkSession() }
 
     fun onEvent(event: LoginUiEvent) {
         when (event) {
@@ -51,12 +50,9 @@ class LoginViewModel @Inject constructor(
     private fun login() = viewModelScope.launch {
         val current = _state.value
 
-        if (current.correo.isBlank()) {
-            _state.update { it.copy(userMessage = "El correo es obligatorio") }
-            return@launch
-        }
-        if (current.password.isBlank()) {
-            _state.update { it.copy(userMessage = "La contraseña es obligatoria") }
+        val validation = upsertLogin(current.correo, current.password)
+        if (!validation.isValid) {
+            _state.update { it.copy(userMessage = validation.error) }
             return@launch
         }
 
@@ -65,24 +61,12 @@ class LoginViewModel @Inject constructor(
         when (val result = loginUseCase(current.correo, current.password)) {
             is Resource.Success -> {
                 val role = result.data?.usuario?.rol
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isLoggedIn = true,
-                        userRole = role,
-                        userMessage = "Inicio de sesión exitoso"
-                    )
-                }
+                _state.update { it.copy(isLoading = false, isLoggedIn = true, userRole = role, userMessage = "Inicio de sesión exitoso") }
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        userMessage = result.message ?: "Error al iniciar sesión"
-                    )
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al iniciar sesión") }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
