@@ -10,12 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
-import ucne.edu.elitecut.domain.usecase.CitaUseCase.GetCitaUseCase
+import ucne.edu.elitecut.domain.usecase.CitaUseCase.GetCitaByRemoteIdUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class ConfirmacionViewModel @Inject constructor(
-    private val getCitaUseCase: GetCitaUseCase,
+    private val getCitaByRemoteIdUseCase: GetCitaByRemoteIdUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -25,9 +25,7 @@ class ConfirmacionViewModel @Inject constructor(
     private val _state = MutableStateFlow(ConfirmacionUiState(isLoading = true, metodoPago = metodoPago))
     val state: StateFlow<ConfirmacionUiState> = _state.asStateFlow()
 
-    init {
-        loadCita()
-    }
+    init { loadCita() }
 
     fun onEvent(event: ConfirmacionUiEvent) {
         when (event) {
@@ -37,18 +35,15 @@ class ConfirmacionViewModel @Inject constructor(
     }
 
     private fun loadCita() = viewModelScope.launch {
-        when (val result = getCitaUseCase(citaId)) {
+        val remoteId = citaId.toIntOrNull() ?: 0
+        when (val result = getCitaByRemoteIdUseCase(remoteId)) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(isLoading = false, cita = result.data)
-                }
+                _state.update { it.copy(isLoading = false, cita = result.data) }
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(isLoading = false, userMessage = result.message)
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
