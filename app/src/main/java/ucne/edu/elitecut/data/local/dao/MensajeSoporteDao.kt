@@ -9,7 +9,7 @@ import ucne.edu.elitecut.data.local.entities.MensajeSoporteEntity
 @Dao
 interface MensajeSoporteDao {
 
-    @Query("SELECT * FROM mensajes_soporte WHERE usuarioId = :userId AND tipoMensaje = 'CLIENTE' ORDER BY fechaEnvio DESC")
+    @Query("SELECT * FROM mensajes_soporte WHERE usuarioId = :userId ORDER BY remoteId ASC")
     fun observeByUsuario(userId: String): Flow<List<MensajeSoporteEntity>>
 
     @Query("SELECT * FROM mensajes_soporte ORDER BY fechaEnvio DESC")
@@ -18,6 +18,8 @@ interface MensajeSoporteDao {
     @Query("SELECT * FROM mensajes_soporte WHERE id = :id")
     suspend fun getById(id: String): MensajeSoporteEntity?
 
+    @Query("SELECT * FROM mensajes_soporte WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: Int): MensajeSoporteEntity?
     @Upsert
     suspend fun upsert(mensaje: MensajeSoporteEntity)
 

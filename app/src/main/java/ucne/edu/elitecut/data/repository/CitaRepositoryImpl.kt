@@ -3,10 +3,11 @@ package ucne.edu.elitecut.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ucne.edu.elitecut.data.local.dao.CitaDao
+import ucne.edu.elitecut.data.local.preferences.TokenManager
 import ucne.edu.elitecut.data.mapper.toDomain
 import ucne.edu.elitecut.data.mapper.toEntity
-import ucne.edu.elitecut.data.remote.RemoteDataSource.CitaRemoteDataSource
 import ucne.edu.elitecut.data.remote.Resource
+import ucne.edu.elitecut.data.remote.RemoteDataSource.CitaRemoteDataSource
 import ucne.edu.elitecut.data.remote.dtos.ActualizarCitaDto
 import ucne.edu.elitecut.data.remote.dtos.CambiarEstadoDto
 import ucne.edu.elitecut.data.remote.dtos.CrearCitaDto
@@ -19,7 +20,8 @@ import javax.inject.Singleton
 @Singleton
 class CitaRepositoryImpl @Inject constructor(
     private val localDataSource: CitaDao,
-    private val remoteDataSource: CitaRemoteDataSource
+    private val remoteDataSource: CitaRemoteDataSource,
+    private val tokenManager: TokenManager
 ) : CitaRepository {
 
     override fun observeMisCitas(clienteId: String): Flow<List<Cita>> {
@@ -39,7 +41,9 @@ class CitaRepositoryImpl @Inject constructor(
         val remoteId = local.remoteId ?: return Resource.Success(local.toDomain())
         return when (val result = remoteDataSource.getCita(remoteId)) {
             is Resource.Success -> {
-                val entity = result.data!!.toEntity()
+                val userId = tokenManager.getUserId()?.toString() ?: ""
+                val existing = localDataSource.getByRemoteId(result.data!!.id)
+                val entity = result.data!!.toEntity(existing?.id, clienteId = userId)
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
@@ -48,10 +52,51 @@ class CitaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getCitaByRemoteId(remoteId: Int): Resource<Cita> {
+        val local = localDataSource.getByRemoteId(remoteId)
+        if (local != null) return Resource.Success(local.toDomain())
+        return when (val result = remoteDataSource.getCita(remoteId)) {
+            is Resource.Success -> {
+                val userId = tokenManager.getUserId()?.toString() ?: ""
+                val existing = localDataSource.getByRemoteId(remoteId)
+                val entity = result.data!!.toEntity(existing?.id, clienteId = userId)
+                localDataSource.upsert(entity)
+                Resource.Success(entity.toDomain())
+            }
+            is Resource.Error -> Resource.Error(result.message ?: "Cita no encontrada")
+            else -> Resource.Loading()
+        }
+    }
+
     override suspend fun crearCitaLocal(cita: Cita): Resource<Cita> {
         val pending = cita.copy(isPendingCreate = true)
         localDataSource.upsert(pending.toEntity())
         return Resource.Success(pending)
+    }
+
+    override suspend fun crearCitaRemota(cita: Cita): Resource<Int> {
+        val request = CrearCitaDto(
+            cita.barberoId.toIntOrNull() ?: 0, cita.nombreCliente, cita.edadCliente,
+            cita.telefonoCliente, cita.fechaCita, cita.horaCita, cita.metodoPago
+        )
+        return when (val result = remoteDataSource.crearCita(request)) {
+            is Resource.Success -> {
+                val remoteId = result.data!!.citaId
+                val existing = localDataSource.getByRemoteId(remoteId)
+                val entity = cita.copy(remoteId = remoteId, isPendingCreate = false)
+                    .toEntity()
+                    .copy(id = existing?.id ?: cita.id)
+                localDataSource.upsert(entity)
+                Resource.Success(remoteId)
+            }
+            is Resource.Error -> {
+                // Sin internet: guardar localmente como pendiente
+                val pending = cita.copy(isPendingCreate = true)
+                localDataSource.upsert(pending.toEntity())
+                Resource.Success(-1)
+            }
+            else -> Resource.Loading()
+        }
     }
 
     override suspend fun actualizarCita(id: String, cita: Cita): Resource<Cita> {
@@ -119,9 +164,13 @@ class CitaRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncMisCitas(filtro: String?): Resource<Unit> {
+        val userId = tokenManager.getUserId()?.toString() ?: ""
         return when (val result = remoteDataSource.getMisCitas(filtro)) {
             is Resource.Success -> {
-                val entities = result.data!!.map { it.toEntity() }
+                val entities = result.data!!.map { dto ->
+                    val existing = localDataSource.getByRemoteId(dto.id)
+                    dto.toEntity(existing?.id, clienteId = userId)
+                }
                 localDataSource.upsertAll(entities)
                 Resource.Success(Unit)
             }

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ucne.edu.elitecut.domain.model.MensajeConversacion
 import ucne.edu.elitecut.domain.model.MensajeSoporte
 import ucne.edu.elitecut.presentation.tareas.components.ClienteBottomBar
 import ucne.edu.elitecut.ui.theme.MaterialTheme
@@ -89,9 +90,20 @@ fun SoporteBody(
         }
     }
 
-    LaunchedEffect(state.mensajes.size) {
-        if (state.mensajes.isNotEmpty()) {
-            listState.animateScrollToItem(state.mensajes.size - 1)
+    val allMessages = state.mensajesLocales.map { msg ->
+        ChatMessage(
+            id = msg.id,
+            contenido = msg.contenido,
+            isCliente = msg.tipoMensaje == "CLIENTE",
+            nombreRemitente = msg.nombreUsuario ?: "Soporte",
+            fecha = msg.fechaEnvio,
+            isPending = msg.isPendingCreate
+        )
+    }
+
+    LaunchedEffect(allMessages.size) {
+        if (allMessages.isNotEmpty()) {
+            listState.animateScrollToItem(allMessages.size - 1)
         }
     }
 
@@ -139,19 +151,15 @@ fun SoporteBody(
 
             // Messages area
             Box(modifier = Modifier.weight(1f)) {
-                if (state.isLoading) {
+                if (state.isLoading && allMessages.isEmpty()) {
                     CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .testTag("loading"),
+                        modifier = Modifier.align(Alignment.Center).testTag("loading"),
                         color = MaterialTheme.colorScheme.primary
                     )
-                } else if (state.mensajes.isEmpty()) {
+                } else if (allMessages.isEmpty()) {
                     // Empty state
                     Column(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(32.dp),
+                        modifier = Modifier.align(Alignment.Center).padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
@@ -190,11 +198,8 @@ fun SoporteBody(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(
-                            items = state.mensajes,
-                            key = { it.id }
-                        ) { mensaje ->
-                            MensajeBubble(mensaje = mensaje)
+                        items(allMessages, key = { it.id }) { message ->
+                            ChatBubble(message = message)
                         }
                     }
                 }
@@ -211,14 +216,9 @@ fun SoporteBody(
                     value = state.mensajeInput,
                     onValueChange = { onEvent(SoporteUiEvent.OnMensajeChange(it)) },
                     placeholder = {
-                        Text(
-                            text = "Escribe tu mensaje...",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("Escribe tu mensaje...", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("input_mensaje"),
+                    modifier = Modifier.weight(1f).testTag("input_mensaje"),
                     singleLine = false,
                     maxLines = 4,
                     shape = RoundedCornerShape(24.dp),
@@ -237,9 +237,7 @@ fun SoporteBody(
 
                 IconButton(
                     onClick = { onEvent(SoporteUiEvent.EnviarMensaje) },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .testTag("btn_enviar"),
+                    modifier = Modifier.size(48.dp).testTag("btn_enviar"),
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -253,10 +251,7 @@ fun SoporteBody(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Enviar mensaje"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.Send, "Enviar mensaje")
                     }
                 }
             }
@@ -264,14 +259,52 @@ fun SoporteBody(
     }
 }
 
-@Composable
-fun MensajeBubble(mensaje: MensajeSoporte) {
-    val isCliente = mensaje.tipoMensaje == "CLIENTE"
+// Modelo interno para unificar mensajes de conversación y locales
+data class ChatMessage(
+    val id: String,
+    val contenido: String,
+    val isCliente: Boolean,
+    val nombreRemitente: String,
+    val fecha: String,
+    val isPending: Boolean
+)
 
+@Composable
+fun ChatBubble(message: ChatMessage) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = if (isCliente) Alignment.End else Alignment.Start
+        horizontalAlignment = if (message.isCliente) Alignment.End else Alignment.Start
     ) {
+        // Nombre del remitente para mensajes del admin
+        if (!message.isCliente) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SupportAgent,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = message.nombreRemitente,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
         Box(
             modifier = Modifier
                 .widthIn(max = 280.dp)
@@ -279,12 +312,12 @@ fun MensajeBubble(mensaje: MensajeSoporte) {
                     RoundedCornerShape(
                         topStart = 16.dp,
                         topEnd = 16.dp,
-                        bottomStart = if (isCliente) 16.dp else 4.dp,
-                        bottomEnd = if (isCliente) 4.dp else 16.dp
+                        bottomStart = if (message.isCliente) 16.dp else 4.dp,
+                        bottomEnd = if (message.isCliente) 4.dp else 16.dp
                     )
                 )
                 .background(
-                    if (isCliente)
+                    if (message.isCliente)
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.surfaceContainer
@@ -293,9 +326,9 @@ fun MensajeBubble(mensaje: MensajeSoporte) {
         ) {
             Column {
                 Text(
-                    text = mensaje.contenido,
+                    text = message.contenido,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isCliente)
+                    color = if (message.isCliente)
                         MaterialTheme.colorScheme.onPrimary
                     else
                         MaterialTheme.colorScheme.onSurface
@@ -303,21 +336,26 @@ fun MensajeBubble(mensaje: MensajeSoporte) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = if (isCliente) Arrangement.End else Arrangement.Start
+                    horizontalArrangement = if (message.isCliente) Arrangement.End else Arrangement.Start
                 ) {
                     Text(
-                        text = mensaje.fechaEnvio.takeLast(8),
+                        text = message.fecha.takeLast(8),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isCliente)
+                        color = if (message.isCliente)
                             MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                         else
                             MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 10.sp
                     )
-                    if (mensaje.isPendingCreate) {
+                    if (message.isPending) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "⏳",
+                            text = "⏳ Enviando...",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (message.isCliente)
+                                MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            else
+                                MaterialTheme.colorScheme.secondary,
                             fontSize = 10.sp
                         )
                     }
@@ -334,21 +372,33 @@ private fun SoporteBodyPreview() {
         SoporteBody(
             state = SoporteUiState(
                 isLoading = false,
-                mensajes = listOf(
-                    MensajeSoporte(
-                        id = "1", contenido = "Hola, necesito cambiar la hora de mi cita",
-                        tipoMensaje = "CLIENTE", fechaEnvio = "2026-04-07 14:30:00",
-                        estado = "RESPONDIDO", nombreUsuario = "Jendri"
+                conversacion = listOf(
+                    MensajeConversacion(
+                        id = 1, contenido = "Hola, necesito cambiar la hora de mi cita",
+                        tipoMensaje = "CLIENTE", nombreRemitente = "Jendri",
+                        fechaEnvio = "2026-04-07 14:30:00", estado = "RESPONDIDO"
                     ),
-                    MensajeSoporte(
-                        id = "2", contenido = "¡Hola Jendri! Claro, ¿para cuándo deseas reprogramarla?",
-                        tipoMensaje = "ADMIN", fechaEnvio = "2026-04-07 14:32:00",
-                        estado = "RESPONDIDO", nombreUsuario = "Admin"
+                    MensajeConversacion(
+                        id = 2, contenido = "¡Hola Jendri! Claro, ¿para cuándo deseas reprogramarla?",
+                        tipoMensaje = "ADMIN", nombreRemitente = "Soporte Elite Cut",
+                        fechaEnvio = "2026-04-07 14:32:00", estado = "RESPONDIDO"
                     ),
+                    MensajeConversacion(
+                        id = 3, contenido = "Para mañana a las 3PM si es posible",
+                        tipoMensaje = "CLIENTE", nombreRemitente = "Jendri",
+                        fechaEnvio = "2026-04-07 14:35:00", estado = "PENDIENTE"
+                    ),
+                    MensajeConversacion(
+                        id = 4, contenido = "¡Listo! Tu cita ha sido reprogramada para mañana a las 3PM con Carlos Ruiz.",
+                        tipoMensaje = "ADMIN", nombreRemitente = "Soporte Elite Cut",
+                        fechaEnvio = "2026-04-07 14:40:00", estado = "RESPONDIDO"
+                    )
+                ),
+                mensajesLocales = listOf(
                     MensajeSoporte(
-                        id = "3", contenido = "Para mañana a las 3PM si es posible",
-                        tipoMensaje = "CLIENTE", fechaEnvio = "2026-04-07 14:35:00",
-                        estado = "PENDIENTE", nombreUsuario = "Jendri", isPendingCreate = true
+                        id = "local-1", contenido = "Perfecto, muchas gracias!",
+                        tipoMensaje = "CLIENTE", fechaEnvio = "2026-04-07 14:42:00",
+                        isPendingCreate = true
                     )
                 )
             ),

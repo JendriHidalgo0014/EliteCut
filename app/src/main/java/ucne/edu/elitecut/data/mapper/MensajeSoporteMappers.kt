@@ -28,9 +28,10 @@ fun MensajeSoporte.toEntity() = MensajeSoporteEntity(
     isPendingCreate = isPendingCreate
 )
 
-fun MensajeResponseDto.toEntity() = MensajeSoporteEntity(
+fun MensajeResponseDto.toEntity(existingId: String? = null, usuarioId: String = ""): MensajeSoporteEntity = MensajeSoporteEntity(
+    id = existingId ?: java.util.UUID.randomUUID().toString(),
     remoteId = id,
-    usuarioId = "",
+    usuarioId = usuarioId,
     contenido = contenido,
     estado = estado,
     tipoMensaje = tipoMensaje,

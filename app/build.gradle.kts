@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.androidx.tv.material)
+    implementation(libs.androidx.room.ktx)
     ksp(libs.room.compiler)
 
     // ── Hilt (todo via KSP, sin kapt) ──

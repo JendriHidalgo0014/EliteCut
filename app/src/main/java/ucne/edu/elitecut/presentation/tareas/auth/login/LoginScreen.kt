@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ucne.edu.elitecut.R
+import ucne.edu.elitecut.presentation.utils.InputValidation
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
 @Composable
@@ -186,13 +187,16 @@ fun LoginBody(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Campo Email
+                    // Campo Email - máx 60 caracteres
                     OutlinedTextField(
                         value = state.correo,
-                        onValueChange = { onEvent(LoginUiEvent.OnCorreoChange(it)) },
+                        onValueChange = {
+                            val limited = InputValidation.limitLength(it, 60)
+                            onEvent(LoginUiEvent.OnCorreoChange(limited))
+                        },
                         placeholder = {
                             Text(
-                                text = "ejemplo@correo.com",
+                                text = "ejemplo@gmail.com",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
@@ -242,10 +246,13 @@ fun LoginBody(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Campo Contraseña
+                    // Campo Contraseña - máx 30 caracteres
                     OutlinedTextField(
                         value = state.password,
-                        onValueChange = { onEvent(LoginUiEvent.OnPasswordChange(it)) },
+                        onValueChange = {
+                            val limited = InputValidation.limitLength(it, 30)
+                            onEvent(LoginUiEvent.OnPasswordChange(limited))
+                        },
                         placeholder = {
                             Text(
                                 text = "• • • • • • • •",

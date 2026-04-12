@@ -5,11 +5,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import ucne.edu.elitecut.presentation.tareas.administradores.dashboard.AdminDashboardScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.gestionarBarberos.GestionarBarberosScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.gestionarCitas.GestionarCitasScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.gestionarUsuarios.GestionarUsuariosScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.modificarBarbero.ModificarBarberoScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.nuevoBarbero.NuevoBarberoScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.perfilAdmin.PerfilAdminScreen
+import ucne.edu.elitecut.presentation.tareas.administradores.soporteAdmin.SoporteAdminScreen
 import ucne.edu.elitecut.presentation.tareas.auth.login.LoginScreen
 import ucne.edu.elitecut.presentation.tareas.auth.register.RegisterScreen
 import ucne.edu.elitecut.presentation.tareas.clientes.agendarCita.AgendarCitaScreen
 import ucne.edu.elitecut.presentation.tareas.clientes.clienteHome.HomeScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.confirmacion.ConfirmacionScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.detalleCita.DetalleCitaScreen
 import ucne.edu.elitecut.presentation.tareas.clientes.galeria.GaleriaScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.metodoPago.MetodoPagoScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.misCitas.MisCitasScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.perfil.PerfilClienteScreen
+import ucne.edu.elitecut.presentation.tareas.clientes.soporte.SoporteScreen
 
 @Composable
 fun EliteCutNavHost(
@@ -73,7 +87,6 @@ fun EliteCutNavHost(
 
         composable<Screen.BarberoDetalle> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.BarberoDetalle>()
-            // TODO: BarberoDetalleScreen(barberoId = args.barberoId)
         }
 
         composable<Screen.GaleriaEstilos> { backStackEntry ->
@@ -98,29 +111,93 @@ fun EliteCutNavHost(
 
         composable<Screen.MetodoPago> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.MetodoPago>()
-            // TODO: MetodoPagoScreen(citaId = args.citaId)
+            MetodoPagoScreen(
+                onPagoExitoso = { citaId, metodoPago ->
+                    navController.navigate(Screen.Confirmacion(citaId, metodoPago)) {
+                        popUpTo(Screen.ClienteHome)
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.Confirmacion> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.Confirmacion>()
-            // TODO: ConfirmacionScreen(citaId = args.citaId, metodoPago = args.metodoPago)
+            ConfirmacionScreen(
+                onVerMisCitas = {
+                    navController.navigate(Screen.MisCitas) {
+                        popUpTo(Screen.ClienteHome)
+                    }
+                },
+                onVolverAlHome = {
+                    navController.navigate(Screen.ClienteHome) {
+                        popUpTo(Screen.ClienteHome) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable<Screen.MisCitas> {
-            // TODO: MisCitasScreen
+            MisCitasScreen(
+                onCitaClick = { citaId ->
+                    navController.navigate(Screen.DetalleCita(citaId))
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.ClienteHome) {
+                        popUpTo(Screen.ClienteHome) { inclusive = true }
+                    }
+                },
+                onNavigateToSoporte = {
+                    navController.navigate(Screen.Soporte)
+                },
+                onNavigateToPerfil = {
+                    navController.navigate(Screen.PerfilCliente)
+                }
+            )
         }
 
         composable<Screen.DetalleCita> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.DetalleCita>()
-            // TODO: DetalleCitaScreen(citaId = args.citaId)
+            DetalleCitaScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.Soporte> {
-            // TODO: SoporteScreen
+            SoporteScreen(
+                onNavigateToHome = {
+                    navController.navigate(Screen.ClienteHome) {
+                        popUpTo(Screen.ClienteHome) { inclusive = true }
+                    }
+                },
+                onNavigateToCitas = {
+                    navController.navigate(Screen.MisCitas)
+                },
+                onNavigateToPerfil = {
+                    navController.navigate(Screen.PerfilCliente)
+                }
+            )
         }
 
         composable<Screen.PerfilCliente> {
-            // TODO: PerfilClienteScreen
+            PerfilClienteScreen(
+                onLogout = {
+                    navController.navigate(Screen.Login) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.ClienteHome) {
+                        popUpTo(Screen.ClienteHome) { inclusive = true }
+                    }
+                },
+                onNavigateToCitas = {
+                    navController.navigate(Screen.MisCitas)
+                },
+                onNavigateToSoporte = {
+                    navController.navigate(Screen.Soporte)
+                }
+            )
         }
 
         // ========================
@@ -128,41 +205,81 @@ fun EliteCutNavHost(
         // ========================
 
         composable<Screen.AdminHome> {
-            // TODO: AdminHomeScreen
+            AdminDashboardScreen(
+                onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
+                onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
+                onNavigateToUsuarios = { navController.navigate(Screen.GestionarUsuarios) },
+                onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) },
+                onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
+            )
         }
 
         composable<Screen.GestionarBarberos> {
-            // TODO: GestionarBarberosScreen
+            GestionarBarberosScreen(
+                onNuevoBarbero = { navController.navigate(Screen.NuevoBarbero) },
+                onEditarBarbero = { id -> navController.navigate(Screen.ModificarBarbero(id)) },
+                onNavigateToDashboard = { navController.navigate(Screen.AdminHome) { popUpTo(Screen.AdminHome) { inclusive = true } } },
+                onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
+                onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) },
+                onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
+            )
         }
 
         composable<Screen.NuevoBarbero> {
-            // TODO: NuevoBarberoScreen
+            NuevoBarberoScreen(
+                onBarberoCreado = { navController.popBackStack() },
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.ModificarBarbero> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.ModificarBarbero>()
-            // TODO: ModificarBarberoScreen(barberoId = args.barberoId)
+            ModificarBarberoScreen(
+                onBarberoGuardado = { navController.popBackStack() },
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Screen.GestionarCitas> {
-            // TODO: GestionarCitasScreen
+            GestionarCitasScreen(
+                onNavigateToDashboard = { navController.navigate(Screen.AdminHome) { popUpTo(Screen.AdminHome) { inclusive = true } } },
+                onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
+                onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) },
+                onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
+            )
         }
 
         composable<Screen.GestionarUsuarios> {
-            // TODO: GestionarUsuariosScreen
+            GestionarUsuariosScreen(
+                onNavigateToDashboard = { navController.navigate(Screen.AdminHome) { popUpTo(Screen.AdminHome) { inclusive = true } } },
+                onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
+                onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
+                onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) },
+                onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
+            )
         }
 
         composable<Screen.SoporteAdmin> {
-            // TODO: SoporteAdminScreen
+            SoporteAdminScreen(
+                onNavigateToDashboard = { navController.navigate(Screen.AdminHome) { popUpTo(Screen.AdminHome) { inclusive = true } } },
+                onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
+                onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
+                onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
+            )
         }
 
         composable<Screen.ConversacionAdmin> { backStackEntry ->
             val args = backStackEntry.toRoute<Screen.ConversacionAdmin>()
-            // TODO: ConversacionAdminScreen(usuarioId = args.usuarioId)
         }
 
         composable<Screen.PerfilAdmin> {
-            // TODO: PerfilAdminScreen
+            PerfilAdminScreen(
+                onLogout = { navController.navigate(Screen.Login) { popUpTo(0) { inclusive = true } } },
+                onNavigateToDashboard = { navController.navigate(Screen.AdminHome) { popUpTo(Screen.AdminHome) { inclusive = true } } },
+                onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
+                onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
+                onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) }
+            )
         }
     }
 }

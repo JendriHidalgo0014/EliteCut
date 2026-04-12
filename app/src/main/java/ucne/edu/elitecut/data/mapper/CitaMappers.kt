@@ -46,9 +46,10 @@ fun Cita.toEntity() = CitaEntity(
     isPendingCreate = isPendingCreate
 )
 
-fun CitaResponseDto.toEntity() = CitaEntity(
+fun CitaResponseDto.toEntity(existingId: String? = null, clienteId: String = "") = CitaEntity(
+    id = existingId ?: java.util.UUID.randomUUID().toString(),
     remoteId = id,
-    clienteId = "",
+    clienteId = clienteId,
     barberoId = "",
     nombreCliente = nombreCliente,
     edadCliente = edadCliente,

@@ -12,6 +12,9 @@ interface CitaDao {
     @Query("SELECT * FROM citas WHERE clienteId = :clienteId ORDER BY fechaCita DESC")
     fun observeByCliente(clienteId: String): Flow<List<CitaEntity>>
 
+    @Query("SELECT * FROM citas WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: Int): CitaEntity?
+
     @Query("SELECT * FROM citas ORDER BY fechaCita DESC")
     fun observeAll(): Flow<List<CitaEntity>>
 

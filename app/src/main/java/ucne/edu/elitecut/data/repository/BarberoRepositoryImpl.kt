@@ -34,7 +34,8 @@ class BarberoRepositoryImpl @Inject constructor(
         return when (val result = remoteDataSource.getBarbero(id)) {
             is Resource.Success -> {
                 val dto = result.data!!
-                val entity = dto.toEntity()
+                val existing = localDataSource.getByRemoteId(dto.id)
+                val entity = dto.toEntity(existing?.id)
                 localDataSource.upsert(entity)
                 imagenLocalDataSource.deleteByBarbero(entity.id)
                 imagenLocalDataSource.upsertAll(dto.galeriaCortes.map { it.toEntity(entity.id) })
@@ -56,7 +57,8 @@ class BarberoRepositoryImpl @Inject constructor(
         )
         return when (val result = remoteDataSource.crearBarbero(request)) {
             is Resource.Success -> {
-                val entity = result.data!!.toEntity()
+                val existing = localDataSource.getByRemoteId(result.data!!.id)
+                val entity = result.data!!.toEntity(existing?.id)
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
@@ -113,7 +115,10 @@ class BarberoRepositoryImpl @Inject constructor(
     override suspend fun syncBarberos(): Resource<Unit> {
         return when (val result = remoteDataSource.getBarberos()) {
             is Resource.Success -> {
-                val entities = result.data!!.map { it.toEntity() }
+                val entities = result.data!!.map { dto ->
+                    val existing = localDataSource.getByRemoteId(dto.id)
+                    dto.toEntity(existing?.id)
+                }
                 localDataSource.deleteAll()
                 localDataSource.upsertAll(entities)
                 Resource.Success(Unit)

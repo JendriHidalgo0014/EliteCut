@@ -11,19 +11,17 @@ interface BarberoDao {
 
     @Query("SELECT * FROM barberos WHERE activo = 1 ORDER BY disponible DESC, nombre ASC")
     fun observeAll(): Flow<List<BarberoEntity>>
-
     @Query("SELECT * FROM barberos WHERE id = :id")
     suspend fun getById(id: String): BarberoEntity?
 
+    @Query("SELECT * FROM barberos WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getByRemoteId(remoteId: Int): BarberoEntity?
     @Upsert
     suspend fun upsert(barbero: BarberoEntity)
-
     @Upsert
     suspend fun upsertAll(barberos: List<BarberoEntity>)
-
     @Query("DELETE FROM barberos WHERE id = :id")
     suspend fun delete(id: String)
-
     @Query("DELETE FROM barberos")
     suspend fun deleteAll()
 }

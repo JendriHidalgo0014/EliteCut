@@ -3,6 +3,7 @@ package ucne.edu.elitecut.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ucne.edu.elitecut.data.local.dao.MensajeSoporteDao
+import ucne.edu.elitecut.data.local.preferences.TokenManager
 import ucne.edu.elitecut.data.mapper.toDomain
 import ucne.edu.elitecut.data.mapper.toEntity
 import ucne.edu.elitecut.data.remote.RemoteDataSource.SoporteRemoteDataSource
@@ -17,7 +18,8 @@ import javax.inject.Singleton
 @Singleton
 class SoporteRepositoryImpl @Inject constructor(
     private val localDataSource: MensajeSoporteDao,
-    private val remoteDataSource: SoporteRemoteDataSource
+    private val remoteDataSource: SoporteRemoteDataSource,
+    private val tokenManager: TokenManager
 ) : SoporteRepository {
 
     override fun observeMisMensajes(userId: String): Flow<List<MensajeSoporte>> {
@@ -27,10 +29,12 @@ class SoporteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun enviarMensaje(contenido: String): Resource<MensajeSoporte> {
+        val userId = tokenManager.getUserId()?.toString() ?: ""
         return when (val result = remoteDataSource.enviarMensaje(EnviarMensajeDto(contenido))) {
             is Resource.Success -> {
                 val dto = result.data!!
-                val entity = dto.toEntity()
+                val existing = localDataSource.getByRemoteId(dto.id)
+                val entity = dto.toEntity(existing?.id, usuarioId = userId)
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
@@ -98,10 +102,20 @@ class SoporteRepositoryImpl @Inject constructor(
     }
 
     override suspend fun syncMisMensajes(): Resource<Unit> {
+        val userId = tokenManager.getUserId()?.toString() ?: ""
         return when (val result = remoteDataSource.getMisMensajes()) {
             is Resource.Success -> {
-                val entities = result.data!!.map { it.toEntity() }
-                localDataSource.upsertAll(entities)
+                val allEntities = result.data!!.flatMap { dto ->
+                    buildList {
+                        val existing = localDataSource.getByRemoteId(dto.id)
+                        add(dto.toEntity(existing?.id, usuarioId = userId))
+                        dto.respuestas?.forEach { respuesta ->
+                            val existingResp = localDataSource.getByRemoteId(respuesta.id)
+                            add(respuesta.toEntity(existingResp?.id, usuarioId = userId))
+                        }
+                    }
+                }
+                localDataSource.upsertAll(allEntities)
                 Resource.Success(Unit)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al sincronizar mensajes")

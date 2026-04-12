@@ -32,7 +32,8 @@ fun Barbero.toEntity() = BarberoEntity(
     isPendingCreate = isPendingCreate
 )
 
-fun BarberoListDto.toEntity() = BarberoEntity(
+fun BarberoListDto.toEntity(existingId: String? = null) = BarberoEntity(
+    id = existingId ?: java.util.UUID.randomUUID().toString(),
     remoteId = id,
     nombre = nombre,
     edad = edad,
@@ -42,7 +43,8 @@ fun BarberoListDto.toEntity() = BarberoEntity(
     disponible = disponible
 )
 
-fun BarberoDetailDto.toEntity() = BarberoEntity(
+fun BarberoDetailDto.toEntity(existingId: String? = null) = BarberoEntity(
+    id = existingId ?: java.util.UUID.randomUUID().toString(),
     remoteId = id,
     nombre = nombre,
     edad = edad,

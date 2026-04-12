@@ -9,9 +9,10 @@ data class AgendarCitaUiState(
     val telefono: String = "",
     val fechaCita: String = "",
     val horaCita: String = "",
-    val showDatePicker: Boolean = false,
     val horariosDisponibles: List<String> = emptyList(),
+    val showDatePicker: Boolean = false,
     val citaCreada: Boolean = false,
+    val citaCreadaOffline: Boolean = false,
     val citaId: String = "",
     val userMessage: String? = null
 )

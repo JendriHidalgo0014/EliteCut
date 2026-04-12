@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -49,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +58,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ucne.edu.elitecut.presentation.utils.InputValidation
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
 @Composable
@@ -118,105 +121,71 @@ fun RegisterBody(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Header con flecha atrás
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateToLogin) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver al login",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver al login", tint = MaterialTheme.colorScheme.primary)
                 }
-                Text(
-                    text = "Registro de Barbero",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text("Registro de Barbero", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Título
-            Text(
-                text = "Únete a la Élite",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold,
-                fontStyle = FontStyle.Italic,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+            Text("Únete a la Élite", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = "Crea tu cuenta premium para empezar",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+            Text("Crea tu cuenta premium para empezar", style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Campo Nombre Completo
-            Text(
-                text = "Nombre Completo",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Nombre Completo - solo letras y espacios, máx 50
+            Text("Nombre Completo", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.nombre,
-                onValueChange = { onEvent(RegisterUiEvent.OnNombreChange(it)) },
+                onValueChange = {
+                    val filtered = InputValidation.filterNombreInput(it, 50)
+                    onEvent(RegisterUiEvent.OnNombreChange(filtered))
+                },
                 placeholder = { Text("Ej. Juan Pérez", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                supportingText = { Text("Solo letras y espacios (${state.nombre.length}/50)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().testTag("input_nombre"),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo Teléfono
-            Text(
-                text = "Teléfono",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Teléfono - formato XXX-XXX-XXXX
+            Text("Teléfono", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.telefono,
-                onValueChange = { onEvent(RegisterUiEvent.OnTelefonoChange(it)) },
-                placeholder = { Text("+34 000 000 000", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                onValueChange = {
+                    val formatted = InputValidation.formatPhoneInput(it)
+                    onEvent(RegisterUiEvent.OnTelefonoChange(formatted))
+                },
+                placeholder = { Text("849-381-6768", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                supportingText = { Text("Formato: XXX-XXX-XXXX", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth().testTag("input_telefono"),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo Fecha de Ingreso
-            Text(
-                text = "Fecha de Ingreso",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Fecha de Ingreso
+            Text("Fecha de Ingreso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
-                value = state.fechaIngreso,
-                onValueChange = {},
-                placeholder = { Text("mm/dd/yyyy", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                value = state.fechaIngreso, onValueChange = {},
+                placeholder = { Text("Seleccionar fecha", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.CalendarToday, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingIcon = {
                     IconButton(onClick = { onEvent(RegisterUiEvent.ShowDatePicker) }) {
@@ -224,145 +193,98 @@ fun RegisterBody(
                     }
                 },
                 modifier = Modifier.fillMaxWidth().testTag("input_fecha"),
-                singleLine = true,
-                readOnly = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo Correo Electrónico
-            Text(
-                text = "Correo Electrónico",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Correo Electrónico - máx 60
+            Text("Correo Electrónico", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.correo,
-                onValueChange = { onEvent(RegisterUiEvent.OnCorreoChange(it)) },
+                onValueChange = {
+                    val limited = InputValidation.limitLength(it, 60)
+                    onEvent(RegisterUiEvent.OnCorreoChange(limited))
+                },
                 placeholder = { Text("usuario@gmail.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Email, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                supportingText = { Text("Debe ser una cuenta de Gmail (${state.correo.length}/60)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth().testTag("input_correo"),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo Contraseña
-            Text(
-                text = "Contraseña",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Contraseña - máx 30
+            Text("Contraseña", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.password,
-                onValueChange = { onEvent(RegisterUiEvent.OnPasswordChange(it)) },
+                onValueChange = {
+                    val limited = InputValidation.limitLength(it, 30)
+                    onEvent(RegisterUiEvent.OnPasswordChange(limited))
+                },
                 placeholder = { Text("• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingIcon = {
                     IconButton(onClick = { onEvent(RegisterUiEvent.TogglePasswordVisibility) }) {
-                        Icon(
-                            imageVector = if (state.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle password",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(if (state.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "Toggle password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
+                supportingText = { Text("Máximo 30 caracteres (${state.password.length}/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth().testTag("input_password"),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo Confirmar Contraseña
-            Text(
-                text = "Confirmar",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold
-            )
+            // Confirmar Contraseña - máx 30
+            Text("Confirmar", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.confirmarPassword,
-                onValueChange = { onEvent(RegisterUiEvent.OnConfirmarPasswordChange(it)) },
+                onValueChange = {
+                    val limited = InputValidation.limitLength(it, 30)
+                    onEvent(RegisterUiEvent.OnConfirmarPasswordChange(limited))
+                },
                 placeholder = { Text("• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 trailingIcon = {
                     IconButton(onClick = { onEvent(RegisterUiEvent.ToggleConfirmarPasswordVisibility) }) {
-                        Icon(
-                            imageVector = if (state.isConfirmarPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = "Toggle confirm password",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Icon(if (state.isConfirmarPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "Toggle confirm password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
+                supportingText = { Text("Máximo 30 caracteres (${state.confirmarPassword.length}/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 visualTransformation = if (state.isConfirmarPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth().testTag("input_confirmar"),
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = textFieldColors
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Botón Registrarse
             Button(
                 onClick = { onEvent(RegisterUiEvent.Register) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .testTag("btn_register"),
+                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_register"),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 enabled = !state.isLoading
             ) {
                 if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
-                    Text(
-                        text = "Registrarse",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Registrarse", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Link a login
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "¿Ya tienes una cuenta? ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Inicia sesión",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onNavigateToLogin() }
-                )
+            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                Text("¿Ya tienes una cuenta? ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Inicia sesión", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onNavigateToLogin() })
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -372,44 +294,30 @@ fun RegisterBody(
             val datePickerState = rememberDatePickerState(
                 selectableDates = object : SelectableDates {
                     override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        // Usar inicio del día de hoy en UTC para comparación correcta
                         val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
-                            .atStartOfDay(java.time.ZoneOffset.UTC)
-                            .toInstant()
-                            .toEpochMilli()
+                            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
                         return utcTimeMillis >= todayUtc
                     }
                 }
             )
-
             DatePickerDialog(
                 onDismissRequest = { onEvent(RegisterUiEvent.HideDatePicker) },
                 confirmButton = {
-                    TextButton(
-                        onClick = {
-                            datePickerState.selectedDateMillis?.let { millis ->
-                                // Usar UTC para evitar desfase de un día
-                                val date = java.time.Instant.ofEpochMilli(millis)
-                                    .atZone(java.time.ZoneOffset.UTC)
-                                    .toLocalDate()
-                                val formatted = date.format(
-                                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                                )
-                                onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
-                            }
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val date = java.time.Instant.ofEpochMilli(millis)
+                                .atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                            val formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                            onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
                         }
-                    ) {
-                        Text("Confirmar", color = MaterialTheme.colorScheme.primary)
-                    }
+                    }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
                 },
                 dismissButton = {
                     TextButton(onClick = { onEvent(RegisterUiEvent.HideDatePicker) }) {
                         Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+            ) { DatePicker(state = datePickerState) }
         }
     }
 }
@@ -418,10 +326,6 @@ fun RegisterBody(
 @Composable
 private fun RegisterBodyPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
-        RegisterBody(
-            state = RegisterUiState(),
-            onEvent = {},
-            onNavigateToLogin = {}
-        )
+        RegisterBody(state = RegisterUiState(), onEvent = {}, onNavigateToLogin = {})
     }
 }
