@@ -103,7 +103,6 @@ fun AgendarCitaBody(
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
-            // Top bar
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onBackground) }
                 Text("Agendar Cita", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
@@ -111,7 +110,6 @@ fun AgendarCitaBody(
                 Spacer(modifier = Modifier.width(48.dp))
             }
 
-            // Reserva Premium icon
             Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.ContentCut, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(30.dp))
@@ -125,20 +123,15 @@ fun AgendarCitaBody(
             Text("Información Personal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Nombre - solo letras y espacios, máx 50
+            // Nombre - solo lectura, auto-rellenado
             Text("Nombre", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.nombre,
-                onValueChange = {
-                    val filtered = InputValidation.filterNombreInput(it, 50)
-                    onEvent(AgendarCitaUiEvent.OnNombreChange(filtered))
-                },
-                placeholder = { Text("Tu nombre completo", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                onValueChange = {},
                 leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                supportingText = { Text("Solo letras (${state.nombre.length}/50)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_nombre"),
-                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -163,17 +156,13 @@ fun AgendarCitaBody(
                 Column(modifier = Modifier.weight(0.65f)) {
                     Text("Teléfono", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
+                    // Teléfono - solo lectura, auto-rellenado
                     OutlinedTextField(
                         value = state.telefono,
-                        onValueChange = {
-                            val formatted = InputValidation.formatPhoneInput(it)
-                            onEvent(AgendarCitaUiEvent.OnTelefonoChange(formatted))
-                        },
-                        placeholder = { Text("849-381-6768", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        onValueChange = {},
                         leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth().testTag("input_telefono"),
-                        singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                        singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
                 }
             }
@@ -183,7 +172,6 @@ fun AgendarCitaBody(
             Text("Detalles de la Cita", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Día de la cita
             Text("Día de la cita", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
@@ -279,7 +267,8 @@ fun AgendarCitaBody(
 private fun AgendarCitaBodyPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         AgendarCitaBody(
-            state = AgendarCitaUiState(isLoading = false, nombreBarbero = "Carlos Ruiz", horariosDisponibles = AgendarCitaViewModel.TODOS_LOS_HORARIOS, horaCita = "7AM - 8AM"),
+            state = AgendarCitaUiState(isLoading = false, nombre = "Jendri Hidalgo", telefono = "849-381-6768",
+                nombreBarbero = "Carlos Ruiz", horariosDisponibles = AgendarCitaViewModel.TODOS_LOS_HORARIOS, horaCita = "7AM - 8AM"),
             onEvent = {}, onBackClick = {}
         )
     }
