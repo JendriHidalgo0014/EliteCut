@@ -24,8 +24,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -65,12 +63,6 @@ fun DetalleCitaScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(state.citaCancelada) {
-        if (state.citaCancelada) {
-            onBackClick()
-        }
-    }
-
     DetalleCitaBody(
         state = state,
         onEvent = viewModel::onEvent,
@@ -97,57 +89,24 @@ fun DetalleCitaBody(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .testTag("loading"),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    // Top bar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onBackground)
                         }
-                        Text(
-                            text = "Detalle de Cita",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center
-                        )
+                        Text("Detalle de Cita", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.width(48.dp))
                     }
 
                     state.cita?.let { cita ->
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Status badge centered
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             EstadoBadge(estado = cita.estado)
                         }
 
@@ -155,61 +114,23 @@ fun DetalleCitaBody(
 
                         // Barbero card
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                             shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer
-                            )
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 if (cita.fotoBarbero != null) {
-                                    AsyncImage(
-                                        model = cita.fotoBarbero,
-                                        contentDescription = cita.nombreBarbero,
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
+                                    AsyncImage(model = cita.fotoBarbero, contentDescription = cita.nombreBarbero,
+                                        modifier = Modifier.size(56.dp).clip(CircleShape), contentScale = ContentScale.Crop)
                                 } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Person,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(30.dp)
-                                        )
+                                    Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp))
                                     }
                                 }
-
                                 Spacer(modifier = Modifier.width(14.dp))
-
                                 Column {
-                                    Text(
-                                        text = cita.nombreBarbero.ifBlank { "Barbero" },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = cita.especialidadBarbero.ifBlank { "Corte" },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        letterSpacing = 1.sp
-                                    )
+                                    Text(cita.nombreBarbero.ifBlank { "Barbero" }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                                    Text(cita.especialidadBarbero.ifBlank { "Corte" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
                                 }
                             }
                         }
@@ -218,26 +139,12 @@ fun DetalleCitaBody(
 
                         // Details card
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                             shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainer
-                            )
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(20.dp)
-                            ) {
-                                Text(
-                                    text = "INFORMACIÓN DE LA CITA",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
+                            Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                                Text("INFORMACIÓN DE LA CITA", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -259,63 +166,20 @@ fun DetalleCitaBody(
                                     Spacer(modifier = Modifier.height(12.dp))
                                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "Total",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "RD$ ${cita.montoTotal}",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Total", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                                        Text("RD$ ${cita.montoTotal}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
                                 if (cita.isPendingCreate) {
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Text(
-                                        text = "Pendiente de sincronizar con el servidor",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Text("Pendiente de sincronizar con el servidor", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
-
-                        // Cancel button (only if PENDIENTE)
-                        if (cita.estado == "PENDIENTE") {
-                            Button(
-                                onClick = { onEvent(DetalleCitaUiEvent.CancelarCita) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .height(52.dp)
-                                    .testTag("btn_cancelar"),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError
-                                )
-                            ) {
-                                Text(
-                                    text = "Cancelar Cita",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
                     }
                 }
             }
@@ -324,34 +188,13 @@ fun DetalleCitaBody(
 }
 
 @Composable
-fun DetalleRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
+fun DetalleRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -363,21 +206,12 @@ private fun DetalleCitaBodyPreview() {
         DetalleCitaBody(
             state = DetalleCitaUiState(
                 isLoading = false,
-                cita = Cita(
-                    id = "1",
-                    nombreCliente = "Jendri Hidalgo",
-                    telefonoCliente = "+1 809 555 1234",
-                    nombreBarbero = "Carlos Ruiz",
-                    especialidadBarbero = "Senior Barber",
-                    fechaCita = "04/10/2026",
-                    horaCita = "9AM - 10AM",
-                    estado = "PENDIENTE",
-                    metodoPago = "ESTABLECIMIENTO",
-                    montoTotal = 500.0
-                )
+                cita = Cita(id = "1", nombreCliente = "Jendri Hidalgo", telefonoCliente = "809-555-1234",
+                    nombreBarbero = "Carlos Ruiz", especialidadBarbero = "Senior Barber",
+                    fechaCita = "04/10/2026", horaCita = "9AM - 10AM", estado = "PENDIENTE",
+                    metodoPago = "ESTABLECIMIENTO", montoTotal = 500.0)
             ),
-            onEvent = {},
-            onBackClick = {}
+            onEvent = {}, onBackClick = {}
         )
     }
 }
