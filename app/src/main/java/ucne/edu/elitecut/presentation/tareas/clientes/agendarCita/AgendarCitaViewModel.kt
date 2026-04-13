@@ -44,7 +44,10 @@ class AgendarCitaViewModel @Inject constructor(
         )
     }
 
-    init { loadBarbero() }
+    init {
+        loadUserData()
+        loadBarbero()
+    }
 
     fun onEvent(event: AgendarCitaUiEvent) {
         when (event) {
@@ -61,6 +64,12 @@ class AgendarCitaViewModel @Inject constructor(
             is AgendarCitaUiEvent.ContinuarAlPago -> crearCita()
             is AgendarCitaUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
         }
+    }
+
+    private fun loadUserData() = viewModelScope.launch {
+        val nombre = tokenManager.getUserName() ?: ""
+        val telefono = tokenManager.getUserTelefono() ?: ""
+        _state.update { it.copy(nombre = nombre, telefono = telefono) }
     }
 
     private fun loadBarbero() = viewModelScope.launch {
