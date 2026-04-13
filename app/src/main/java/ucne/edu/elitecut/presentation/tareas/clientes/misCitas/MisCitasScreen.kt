@@ -336,12 +336,6 @@ fun CitaItem(
                             onClick = onCancelar,
                             modifier = Modifier.size(32.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Cancel,
-                                contentDescription = "Cancelar cita",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(20.dp)
-                            )
                         }
                     }
                 }
