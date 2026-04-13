@@ -53,9 +53,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import ucne.edu.elitecut.domain.model.Barbero
-import ucne.edu.elitecut.presentation.tareas.clientes.clienteHome.HomeUiEvent
-import ucne.edu.elitecut.presentation.tareas.clientes.clienteHome.HomeUiState
-import ucne.edu.elitecut.presentation.tareas.clientes.clienteHome.HomeViewModel
 import ucne.edu.elitecut.presentation.tareas.components.ClienteBottomBar
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
@@ -153,13 +150,7 @@ fun HomeBody(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notificaciones",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+
                     Box(
                         modifier = Modifier
                             .size(36.dp)
