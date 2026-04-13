@@ -13,6 +13,7 @@ import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoEstablecimientoUseCase
 import ucne.edu.elitecut.domain.usecase.PagoUseCase.PagoTarjetaUseCase
 import ucne.edu.elitecut.domain.validation.upsertPagoTarjeta
+import ucne.edu.elitecut.presentation.utils.InputValidation
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,9 +45,9 @@ class MetodoPagoViewModel @Inject constructor(
         val current = _state.value
 
         if (current.metodoSeleccionado == "TARJETA") {
-            val validation = upsertPagoTarjeta(
-                current.nombreTitular, current.numeroTarjeta, current.vencimiento, current.cvv
-            )
+            // Extraer dígitos limpios para validación
+            val digitos = InputValidation.cardDigitsOnly(current.numeroTarjeta)
+            val validation = upsertPagoTarjeta(current.nombreTitular, digitos, current.vencimiento, current.cvv)
             if (!validation.isValid) {
                 _state.update { it.copy(userMessage = validation.error) }
                 return@launch
@@ -59,8 +60,10 @@ class MetodoPagoViewModel @Inject constructor(
 
         if (current.metodoSeleccionado == "TARJETA") {
             val monto = current.monto.toDoubleOrNull() ?: 500.0
+            // Enviar dígitos limpios al servidor (sin guiones)
+            val digitosLimpios = InputValidation.cardDigitsOnly(current.numeroTarjeta)
             when (val result = pagoTarjetaUseCase(
-                citaIdInt, current.nombreTitular, current.numeroTarjeta,
+                citaIdInt, current.nombreTitular, digitosLimpios,
                 current.vencimiento, current.cvv, monto
             )) {
                 is Resource.Success -> {
