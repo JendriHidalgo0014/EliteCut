@@ -11,14 +11,14 @@ import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.CitaUseCase.CambiarEstadoCitaUseCase
 import ucne.edu.elitecut.domain.usecase.CitaUseCase.ObserveAllCitasUseCase
-import ucne.edu.elitecut.domain.usecase.CitaUseCase.SyncMisCitasUseCase
+import ucne.edu.elitecut.domain.usecase.CitaUseCase.SyncAllCitasUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class GestionarCitasViewModel @Inject constructor(
     private val observeAllCitasUseCase: ObserveAllCitasUseCase,
     private val cambiarEstadoCitaUseCase: CambiarEstadoCitaUseCase,
-    private val syncMisCitasUseCase: SyncMisCitasUseCase
+    private val syncAllCitasUseCase: SyncAllCitasUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GestionarCitasUiState(isLoading = true))
@@ -40,7 +40,7 @@ class GestionarCitasViewModel @Inject constructor(
     }
 
     private fun syncFromApi() = viewModelScope.launch {
-        when (val result = syncMisCitasUseCase()) {
+        when (val result = syncAllCitasUseCase()) {
             is Resource.Success -> _state.update { it.copy(isLoading = false) }
             is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message) }
             is Resource.Loading -> Unit
@@ -49,7 +49,10 @@ class GestionarCitasViewModel @Inject constructor(
 
     private fun cambiarEstado(citaId: String, estado: String) = viewModelScope.launch {
         when (val result = cambiarEstadoCitaUseCase(citaId, estado)) {
-            is Resource.Success -> _state.update { it.copy(userMessage = "Estado cambiado a $estado") }
+            is Resource.Success -> {
+                _state.update { it.copy(userMessage = "Estado cambiado a $estado") }
+                syncFromApi()
+            }
             is Resource.Error -> _state.update { it.copy(userMessage = result.message) }
             is Resource.Loading -> Unit
         }
