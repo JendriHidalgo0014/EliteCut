@@ -7,6 +7,11 @@ data class ValidationResult(
     val error: String? = null
 )
 
+private fun validateCampoRequerido(value: String, mensajeError: String = CampoObligatorio): ValidationResult {
+    if (value.isBlank()) return ValidationResult(false, mensajeError)
+    return ValidationResult(true)
+}
+
 // ========================
 // CAMPOS GENERALES
 // ========================
@@ -35,15 +40,11 @@ fun validateEdad(value: String, min: Int = 1, max: Int = 120): ValidationResult 
 // AUTH - LOGIN
 // ========================
 
-fun validateCorreoLogin(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, CampoObligatorio)
-    return ValidationResult(true)
-}
+fun validateCorreoLogin(value: String): ValidationResult =
+    validateCampoRequerido(value, "El correo es obligatorio")
 
-fun validatePasswordLogin(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, CampoObligatorio)
-    return ValidationResult(true)
-}
+fun validatePasswordLogin(value: String): ValidationResult =
+    validateCampoRequerido(value, "La contraseña es obligatoria")
 
 // ========================
 // AUTH - REGISTRO
@@ -67,33 +68,25 @@ fun validateConfirmarPassword(password: String, confirmar: String): ValidationRe
     return ValidationResult(true)
 }
 
-fun validateFechaIngreso(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, "La fecha de ingreso es obligatoria")
-    return ValidationResult(true)
-}
+fun validateFechaIngreso(value: String): ValidationResult =
+    validateCampoRequerido(value, "La fecha de ingreso es obligatoria")
 
 // ========================
 // CITAS
 // ========================
 
-fun validateFechaCita(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, "Selecciona una fecha para la cita")
-    return ValidationResult(true)
-}
+fun validateFechaCita(value: String): ValidationResult =
+    validateCampoRequerido(value, "Selecciona una fecha para la cita")
 
-fun validateHoraCita(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, "Selecciona un horario para la cita")
-    return ValidationResult(true)
-}
+fun validateHoraCita(value: String): ValidationResult =
+    validateCampoRequerido(value, "Selecciona un horario para la cita")
 
 // ========================
 // BARBEROS
 // ========================
 
-fun validateEspecialidad(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, CampoObligatorio)
-    return ValidationResult(true)
-}
+fun validateEspecialidad(value: String): ValidationResult =
+    validateCampoRequerido(value, "La especialidad es obligatoria")
 
 fun validateEdadBarbero(value: String): ValidationResult {
     return validateEdad(value, min = 18, max = 70)
@@ -103,20 +96,16 @@ fun validateEdadBarbero(value: String): ValidationResult {
 // PAGOS - TARJETA
 // ========================
 
-fun validateNombreTitular(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, "El nombre del titular es obligatorio")
-    return ValidationResult(true)
-}
+fun validateNombreTitular(value: String): ValidationResult =
+    validateCampoRequerido(value, "El nombre del titular es obligatorio")
 
 fun validateNumeroTarjeta(value: String): ValidationResult {
     if (value.length < 16) return ValidationResult(false, "El número de tarjeta debe tener 16 dígitos")
     return ValidationResult(true)
 }
 
-fun validateVencimiento(value: String): ValidationResult {
-    if (value.isBlank()) return ValidationResult(false, "La fecha de vencimiento es obligatoria")
-    return ValidationResult(true)
-}
+fun validateVencimiento(value: String): ValidationResult =
+    validateCampoRequerido(value, "La fecha de vencimiento es obligatoria")
 
 fun validateCvv(value: String): ValidationResult {
     if (value.length < 3) return ValidationResult(false, "El CVV debe tener al menos 3 dígitos")
