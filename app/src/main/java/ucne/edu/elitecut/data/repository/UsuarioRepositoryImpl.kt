@@ -18,6 +18,10 @@ class UsuarioRepositoryImpl @Inject constructor(
     private val remoteDataSource: UsuarioRemoteDataSource
 ) : UsuarioRepository {
 
+    companion object {
+        private const val ERROR_DESCONOCIDO = "Error desconocido"
+    }
+
     override fun observeUsuarios(): Flow<List<Usuario>> {
         return localDataSource.observeAll().map { entities ->
             entities.map { it.toDomain() }
@@ -33,8 +37,8 @@ class UsuarioRepositoryImpl @Inject constructor(
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
-            is Resource.Error -> Resource.Error(result.message ?: "Error desconocido")
-            else -> Resource.Loading()
+            is Resource.Error -> Resource.Error(result.message ?: ERROR_DESCONOCIDO)
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -46,8 +50,8 @@ class UsuarioRepositoryImpl @Inject constructor(
                 localDataSource.delete(id)
                 Resource.Success(Unit)
             }
-            is Resource.Error -> Resource.Error(result.message ?: "Error desconocido")
-            else -> Resource.Loading()
+            is Resource.Error -> Resource.Error(result.message ?: ERROR_DESCONOCIDO)
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -60,8 +64,8 @@ class UsuarioRepositoryImpl @Inject constructor(
                     dto.ingresosHoy, dto.actividadReciente.map { ActividadReciente(it.tipo, it.descripcion, it.fecha) }
                 ))
             }
-            is Resource.Error -> Resource.Error(result.message ?: "Error desconocido")
-            else -> Resource.Loading()
+            is Resource.Error -> Resource.Error(result.message ?: ERROR_DESCONOCIDO)
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -73,8 +77,8 @@ class UsuarioRepositoryImpl @Inject constructor(
                 localDataSource.upsertAll(entities)
                 Resource.Success(Unit)
             }
-            is Resource.Error -> Resource.Error(result.message ?: "Error desconocido")
-            else -> Resource.Loading()
+            is Resource.Error -> Resource.Error(result.message ?: ERROR_DESCONOCIDO)
+            is Resource.Loading -> Resource.Loading()
         }
     }
 }
