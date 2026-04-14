@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.administradores.modificarBarbero
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +66,23 @@ fun ModificarBarberoScreen(
     ModificarBarberoBody(state, viewModel::onEvent, onBackClick)
 }
 
+private fun disponibleTexto(disponible: Boolean) =
+    if (disponible) "El barbero está activo y acepta citas" else "El barbero no acepta citas"
+
+@Composable
+private fun GuardarCambiosButton(isLoading: Boolean, onEvent: (ModificarBarberoUiEvent) -> Unit) {
+    Button(
+        onClick = { onEvent(ModificarBarberoUiEvent.GuardarCambios) },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp).testTag("btn_guardar"),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+        enabled = !isLoading
+    ) {
+        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+        else Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    }
+}
+
 @Composable
 fun ModificarBarberoBody(
     state: ModificarBarberoUiState,
@@ -77,13 +93,11 @@ fun ModificarBarberoBody(
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(ModificarBarberoUiEvent.UserMessageShown) }
     }
-
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface
     )
-
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading && state.nombre.isEmpty()) {
@@ -96,12 +110,9 @@ fun ModificarBarberoBody(
                             fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.width(48.dp))
                     }
-
                     Spacer(modifier = Modifier.height(16.dp))
                     Text("Información del Barbero", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    // Nombre - solo letras y espacios, máx 50
                     Text("Nombre completo", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -112,10 +123,7 @@ fun ModificarBarberoBody(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_nombre"),
                         singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Edad + Teléfono
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(0.35f)) {
                             Text("Edad", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -142,10 +150,7 @@ fun ModificarBarberoBody(
                             )
                         }
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    // Especialidad - máx 40
                     Text("Especialidad", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -156,10 +161,7 @@ fun ModificarBarberoBody(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_especialidad"),
                         singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
-
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    // Foto URL - máx 500
                     Text("Foto de perfil (URL)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
@@ -169,28 +171,21 @@ fun ModificarBarberoBody(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_foto"),
                         singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Disponible switch
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Disponible", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
-                            Text(if (state.disponible) "El barbero está activo y acepta citas" else "El barbero no acepta citas",
-                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(disponibleTexto(state.disponible), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Switch(checked = state.disponible, onCheckedChange = { onEvent(ModificarBarberoUiEvent.OnDisponibleChange(it)) },
                             colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.onPrimary, checkedTrackColor = MaterialTheme.colorScheme.primary,
                                 uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant, uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant))
                     }
-
                     Spacer(modifier = Modifier.height(20.dp))
-
                     Text("Galería de Estilos de Corte", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(4.dp))
                     Text("Modifica las fotos de los estilos que realiza este barbero", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
                     Spacer(modifier = Modifier.height(12.dp))
-
                     LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         itemsIndexed(state.galeriaSlots) { index, slot ->
                             GaleriaSlotCard(index = index, slot = slot,
@@ -198,20 +193,8 @@ fun ModificarBarberoBody(
                                 onNombreChange = { onEvent(ModificarBarberoUiEvent.OnGaleriaNombreChange(index, InputValidation.limitLength(it, 30))) })
                         }
                     }
-
                     Spacer(modifier = Modifier.height(28.dp))
-
-                    Button(
-                        onClick = { onEvent(ModificarBarberoUiEvent.GuardarCambios) },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp).testTag("btn_guardar"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                        enabled = !state.isLoading
-                    ) {
-                        if (state.isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                        else Text("Guardar Cambios", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-
+                    GuardarCambiosButton(isLoading = state.isLoading, onEvent = onEvent)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
