@@ -10,29 +10,29 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+interface RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+    fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
     @Binds
     @Singleton
-    abstract fun bindBarberoRepository(impl: BarberoRepositoryImpl): BarberoRepository
+    fun bindBarberoRepository(impl: BarberoRepositoryImpl): BarberoRepository
 
     @Binds
     @Singleton
-    abstract fun bindCitaRepository(impl: CitaRepositoryImpl): CitaRepository
+    fun bindCitaRepository(impl: CitaRepositoryImpl): CitaRepository
 
     @Binds
     @Singleton
-    abstract fun bindPagoRepository(impl: PagoRepositoryImpl): PagoRepository
+    fun bindPagoRepository(impl: PagoRepositoryImpl): PagoRepository
 
     @Binds
     @Singleton
-    abstract fun bindSoporteRepository(impl: SoporteRepositoryImpl): SoporteRepository
+    fun bindSoporteRepository(impl: SoporteRepositoryImpl): SoporteRepository
 
     @Binds
     @Singleton
-    abstract fun bindUsuarioRepository(impl: UsuarioRepositoryImpl): UsuarioRepository
+    fun bindUsuarioRepository(impl: UsuarioRepositoryImpl): UsuarioRepository
 }
