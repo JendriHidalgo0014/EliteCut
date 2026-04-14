@@ -28,9 +28,7 @@ class SoporteViewModel @Inject constructor(
     private val _state = MutableStateFlow(SoporteUiState(isLoading = true))
     val state: StateFlow<SoporteUiState> = _state.asStateFlow()
 
-    init {
-        loadUserId()
-    }
+    init { loadUserId() }
 
     fun onEvent(event: SoporteUiEvent) {
         when (event) {
@@ -60,7 +58,7 @@ class SoporteViewModel @Inject constructor(
         when (val result = syncMisMensajesUseCase()) {
             is Resource.Success -> _state.update { it.copy(isLoading = false) }
             is Resource.Error -> _state.update { it.copy(isLoading = false) }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 
@@ -75,18 +73,14 @@ class SoporteViewModel @Inject constructor(
 
         when (val result = enviarMensajeUseCase(contenido)) {
             is Resource.Success -> {
-                _state.update {
-                    it.copy(isSending = false, mensajeInput = "", userMessage = "Mensaje enviado")
-                }
+                _state.update { it.copy(isSending = false, mensajeInput = "", userMessage = "Mensaje enviado") }
                 triggerMensajeSyncUseCase()
                 loadConversacion()
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(isSending = false, userMessage = result.message ?: "Error al enviar mensaje")
-                }
+                _state.update { it.copy(isSending = false, userMessage = result.message ?: "Error al enviar mensaje") }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
     }
 }
