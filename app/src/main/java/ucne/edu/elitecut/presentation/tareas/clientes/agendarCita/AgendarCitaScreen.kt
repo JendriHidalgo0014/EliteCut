@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.clientes.agendarCita
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,15 +68,114 @@ fun AgendarCitaScreen(
     onBackClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     LaunchedEffect(state.citaCreada) {
         if (state.citaCreada) { onContinuarAlPago(state.citaId) }
     }
     LaunchedEffect(state.citaCreadaOffline) {
         if (state.citaCreadaOffline) { onBackClick() }
     }
-
     AgendarCitaBody(state = state, onEvent = viewModel::onEvent, onBackClick = onBackClick)
+}
+
+@Composable
+private fun HorarioSlotBox(
+    slot: String,
+    isReceso: Boolean,
+    isSelected: Boolean,
+    isAvailable: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgModifier = when {
+        isReceso -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+        isSelected -> Modifier.background(MaterialTheme.colorScheme.primary)
+        isAvailable -> Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+        else -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    }
+    val clickableModifier = if (isAvailable && !isReceso) Modifier.clickable { onSelect() } else Modifier
+    val textColor = when {
+        isReceso -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        isSelected -> MaterialTheme.colorScheme.onPrimary
+        isAvailable -> MaterialTheme.colorScheme.onSurface
+        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+    }
+    Box(
+        modifier = modifier.height(40.dp).height(40.dp).clip(RoundedCornerShape(8.dp)).then(bgModifier).then(clickableModifier),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(slot, style = MaterialTheme.typography.labelSmall, fontSize = 11.sp,
+            color = textColor, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+    }
+}
+
+@Composable
+private fun HorarioGrid(
+    allSlots: List<String>,
+    horariosDisponibles: List<String>,
+    horaCita: String,
+    onEvent: (AgendarCitaUiEvent) -> Unit
+) {
+    val recesoLabel = "RECESO"
+    val slotsConReceso = buildList {
+        allSlots.forEachIndexed { index, slot -> add(slot); if (index == 4) add(recesoLabel) }
+    }
+    Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        slotsConReceso.chunked(3).forEach { row ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { slot ->
+                    HorarioSlotBox(
+                        slot = slot,
+                        isReceso = slot == recesoLabel,
+                        isSelected = slot == horaCita,
+                        isAvailable = slot != recesoLabel && horariosDisponibles.contains(slot),
+                        onSelect = { onEvent(AgendarCitaUiEvent.OnHoraSelect(slot)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AgendarFechaPickerDialog(onEvent: (AgendarCitaUiEvent) -> Unit) {
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+                return utcTimeMillis >= todayUtc
+            }
+        }
+    )
+    DatePickerDialog(
+        onDismissRequest = { onEvent(AgendarCitaUiEvent.HideDatePicker) },
+        confirmButton = {
+            TextButton(onClick = {
+                datePickerState.selectedDateMillis?.let { millis ->
+                    val date = java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    onEvent(AgendarCitaUiEvent.OnFechaChange(date))
+                }
+            }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
+        },
+        dismissButton = { TextButton(onClick = { onEvent(AgendarCitaUiEvent.HideDatePicker) }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+    ) { DatePicker(state = datePickerState) }
+}
+
+@Composable
+private fun ContinuarPagoButton(isLoading: Boolean, onEvent: (AgendarCitaUiEvent) -> Unit) {
+    Button(
+        onClick = { onEvent(AgendarCitaUiEvent.ContinuarAlPago) },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp).testTag("btn_continuar_pago"),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+        enabled = !isLoading
+    ) {
+        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+        else Text("Continuar al Pago", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,16 +189,11 @@ fun AgendarCitaBody(
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(AgendarCitaUiEvent.UserMessageShown) }
     }
-
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface
     )
-
-    val allSlots = AgendarCitaViewModel.TODOS_LOS_HORARIOS
-    val recesoLabel = "RECESO"
-
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -109,7 +202,6 @@ fun AgendarCitaBody(
                     fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.width(48.dp))
             }
-
             Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.ContentCut, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(30.dp))
@@ -117,36 +209,25 @@ fun AgendarCitaBody(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text("RESERVA PREMIUM", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Text("Información Personal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(10.dp))
-
-            // Nombre - solo lectura, auto-rellenado
             Text("Nombre", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
-                value = state.nombre,
-                onValueChange = {},
+                value = state.nombre, onValueChange = {},
                 leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_nombre"),
                 singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Edad + Teléfono
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(modifier = Modifier.weight(0.35f)) {
                     Text("Edad", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = state.edad,
-                        onValueChange = {
-                            val filtered = InputValidation.filterDigitsOnly(it, 3)
-                            onEvent(AgendarCitaUiEvent.OnEdadChange(filtered))
-                        },
+                        onValueChange = { onEvent(AgendarCitaUiEvent.OnEdadChange(InputValidation.filterDigitsOnly(it, 3))) },
                         placeholder = { Text("25", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth().testTag("input_edad"),
@@ -156,22 +237,17 @@ fun AgendarCitaBody(
                 Column(modifier = Modifier.weight(0.65f)) {
                     Text("Teléfono", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(6.dp))
-                    // Teléfono - solo lectura, auto-rellenado
                     OutlinedTextField(
-                        value = state.telefono,
-                        onValueChange = {},
+                        value = state.telefono, onValueChange = {},
                         leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         modifier = Modifier.fillMaxWidth().testTag("input_telefono"),
                         singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(20.dp))
-
             Text("Detalles de la Cita", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(10.dp))
-
             Text("Día de la cita", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
@@ -182,82 +258,21 @@ fun AgendarCitaBody(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_fecha"),
                 singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Text("Hora de cita", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(8.dp))
-
-            val slotsConReceso = buildList {
-                allSlots.forEachIndexed { index, slot -> add(slot); if (index == 4) add(recesoLabel) }
-            }
-
-            Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                slotsConReceso.chunked(3).forEach { row ->
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        row.forEach { slot ->
-                            val isReceso = slot == recesoLabel
-                            val isSelected = slot == state.horaCita
-                            val isAvailable = !isReceso && state.horariosDisponibles.contains(slot)
-                            Box(
-                                modifier = Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(8.dp))
-                                    .then(when {
-                                        isReceso -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                                        isSelected -> Modifier.background(MaterialTheme.colorScheme.primary)
-                                        isAvailable -> Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                        else -> Modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                    })
-                                    .then(if (isAvailable && !isReceso) Modifier.clickable { onEvent(AgendarCitaUiEvent.OnHoraSelect(slot)) } else Modifier),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(slot, style = MaterialTheme.typography.labelSmall, fontSize = 11.sp,
-                                    color = when { isReceso -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f); isSelected -> MaterialTheme.colorScheme.onPrimary; isAvailable -> MaterialTheme.colorScheme.onSurface; else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f) },
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
-                            }
-                        }
-                        repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                    }
-                }
-            }
-
+            HorarioGrid(
+                allSlots = AgendarCitaViewModel.TODOS_LOS_HORARIOS,
+                horariosDisponibles = state.horariosDisponibles,
+                horaCita = state.horaCita,
+                onEvent = onEvent
+            )
             Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { onEvent(AgendarCitaUiEvent.ContinuarAlPago) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp).testTag("btn_continuar_pago"),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                enabled = !state.isLoading
-            ) {
-                if (state.isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                else Text("Continuar al Pago", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-
+            ContinuarPagoButton(isLoading = state.isLoading, onEvent = onEvent)
             Spacer(modifier = Modifier.height(24.dp))
         }
-
         if (state.showDatePicker) {
-            val datePickerState = rememberDatePickerState(
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
-                        return utcTimeMillis >= todayUtc
-                    }
-                }
-            )
-            DatePickerDialog(
-                onDismissRequest = { onEvent(AgendarCitaUiEvent.HideDatePicker) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val date = java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate()
-                                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                            onEvent(AgendarCitaUiEvent.OnFechaChange(date))
-                        }
-                    }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
-                },
-                dismissButton = { TextButton(onClick = { onEvent(AgendarCitaUiEvent.HideDatePicker) }) { Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant) } }
-            ) { DatePicker(state = datePickerState) }
+            AgendarFechaPickerDialog(onEvent = onEvent)
         }
     }
 }
