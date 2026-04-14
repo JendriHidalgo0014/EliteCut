@@ -7,10 +7,13 @@ import ucne.edu.elitecut.data.remote.dtos.LoginRequestDto
 import ucne.edu.elitecut.data.remote.dtos.RegisterRequestDto
 import ucne.edu.elitecut.data.remote.dtos.UsuarioDto
 import javax.inject.Inject
+private const val RESPUESTA_VACIA = "Respuesta vacía del servidor"
+private const val ERROR_RED = "Error de red"
 
 class AuthRemoteDataSource @Inject constructor(
     private val api: EliteCutApi
 ) {
+
     suspend fun login(request: LoginRequestDto): Resource<AuthResponseDto> {
         return try {
             val response = api.login(request)
@@ -19,13 +22,13 @@ class AuthRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -37,13 +40,13 @@ class AuthRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -55,13 +58,13 @@ class AuthRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -74,7 +77,7 @@ class AuthRemoteDataSource @Inject constructor(
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 }
