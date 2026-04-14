@@ -56,18 +56,15 @@ fun AdminDashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
     onNavigateToBarberos: () -> Unit,
     onNavigateToCitas: () -> Unit,
-    onNavigateToUsuarios: () -> Unit,
     onNavigateToSoporte: () -> Unit,
     onNavigateToPerfil: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     AdminDashboardBody(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigateToBarberos = onNavigateToBarberos,
         onNavigateToCitas = onNavigateToCitas,
-        onNavigateToUsuarios = onNavigateToUsuarios,
         onNavigateToSoporte = onNavigateToSoporte,
         onNavigateToPerfil = onNavigateToPerfil
     )
@@ -79,12 +76,10 @@ fun AdminDashboardBody(
     onEvent: (DashboardUiEvent) -> Unit,
     onNavigateToBarberos: () -> Unit,
     onNavigateToCitas: () -> Unit,
-    onNavigateToUsuarios: () -> Unit,
     onNavigateToSoporte: () -> Unit,
     onNavigateToPerfil: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
@@ -96,142 +91,78 @@ fun AdminDashboardBody(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            AdminBottomBar(
-                currentRoute = "dashboard",
-                onNavigate = { route ->
-                    when (route) {
-                        "barberos" -> onNavigateToBarberos()
-                        "citas" -> onNavigateToCitas()
-                        "soporte" -> onNavigateToSoporte()
-                        "perfil" -> onNavigateToPerfil()
-                    }
+            AdminBottomBar(currentRoute = "dashboard") { route ->
+                when (route) {
+                    "barberos" -> onNavigateToBarberos()
+                    "citas" -> onNavigateToCitas()
+                    "soporte" -> onNavigateToSoporte()
+                    "perfil" -> onNavigateToPerfil()
                 }
-            )
+            }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center).testTag("loading"),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Dashboard",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Panel de administración",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.Default.ContentCut,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-                    }
-
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            StatCard("Citas Hoy", state.citasHoy.toString(), Icons.Default.CalendarMonth, Modifier.weight(1f))
-                            StatCard("Tickets", state.ticketsPendientes.toString(), Icons.Default.SupportAgent, Modifier.weight(1f))
-                        }
-                    }
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            StatCard("Clientes", state.totalClientes.toString(), Icons.Default.People, Modifier.weight(1f))
-                            StatCard("Barberos", state.totalBarberos.toString(), Icons.Default.ContentCut, Modifier.weight(1f))
-                        }
-                    }
-
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text("Ingresos de Hoy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                    Text(
-                                        text = "RD$ ${String.format("%.2f", state.ingresosHoy)}",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Icon(Icons.Default.AttachMoney, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
-                            }
-                        }
-                    }
-
-                    item {
-                        Text(
-                            text = "Actividad Reciente",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    if (state.actividadReciente.isEmpty()) {
-                        item {
-                            Text(
-                                text = "Sin actividad reciente",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    } else {
-                        items(state.actividadReciente) { actividad ->
-                            ActividadItem(actividad = actividad)
-                        }
-                    }
-                }
+                DashboardContent(state)
             }
         }
     }
 }
 
 @Composable
+private fun DashboardContent(state: DashboardUiState) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Dashboard", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+                    Text("Panel de administración", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Icon(Icons.Default.ContentCut, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+            }
+        }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StatCard("Citas Hoy", state.citasHoy.toString(), Icons.Default.CalendarMonth, Modifier.weight(1f))
+                StatCard("Tickets", state.ticketsPendientes.toString(), Icons.Default.SupportAgent, Modifier.weight(1f))
+            }
+        }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StatCard("Clientes", state.totalClientes.toString(), Icons.Default.People, Modifier.weight(1f))
+                StatCard("Barberos", state.totalBarberos.toString(), Icons.Default.ContentCut, Modifier.weight(1f))
+            }
+        }
+        item { IngresosCard(state.ingresosHoy) }
+        item {
+            Text("Actividad Reciente", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+        }
+        if (state.actividadReciente.isEmpty()) {
+            item { Text("Sin actividad reciente", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        } else {
+            items(state.actividadReciente) { actividad -> ActividadItem(actividad) }
+        }
+    }
+}
+
+@Composable
+private fun IngresosCard(ingresosHoy: Double) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                Text("Ingresos de Hoy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Text("RD$ ${String.format("%.2f", ingresosHoy)}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+            }
+            Icon(Icons.Default.AttachMoney, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+        }
+    }
+}
+
+@Composable
 fun StatCard(title: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-    ) {
+    Card(modifier = modifier, shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.height(10.dp))
@@ -243,16 +174,9 @@ fun StatCard(title: String, value: String, icon: ImageVector, modifier: Modifier
 
 @Composable
 fun ActividadItem(actividad: ActividadReciente) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = when (actividad.tipo) {
                         "CITA" -> Icons.Default.CalendarMonth
@@ -280,9 +204,8 @@ private fun AdminDashboardPreview() {
                 actividadReciente = listOf(
                     ActividadReciente("CITA", "Nueva cita agendada por Jendri", "Hace 5 min"),
                     ActividadReciente("SOPORTE", "Ticket de soporte respondido", "Hace 15 min")
-                )
-            ),
-            onEvent = {}, onNavigateToBarberos = {}, onNavigateToCitas = {}, onNavigateToUsuarios = {}, onNavigateToSoporte = {}, onNavigateToPerfil = {}
+                )),
+            onEvent = {}, onNavigateToBarberos = {}, onNavigateToCitas = {}, onNavigateToSoporte = {}, onNavigateToPerfil = {}
         )
     }
 }
