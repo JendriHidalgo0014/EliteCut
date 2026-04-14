@@ -39,7 +39,7 @@ class SoporteRepositoryImpl @Inject constructor(
                 Resource.Success(entity.toDomain())
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al enviar mensaje")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -52,7 +52,7 @@ class SoporteRepositoryImpl @Inject constructor(
                 Resource.Success(tickets)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al obtener tickets")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -66,20 +66,18 @@ class SoporteRepositoryImpl @Inject constructor(
                 ))
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al obtener conversación")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
     override suspend fun responderMensaje(mensajeId: Int, contenido: String): Resource<MensajeSoporte> {
-        return when (val result = remoteDataSource.responderMensaje(mensajeId,
-            ResponderMensajeDto(contenido)
-        )) {
+        return when (val result = remoteDataSource.responderMensaje(mensajeId, ResponderMensajeDto(contenido))) {
             is Resource.Success -> {
                 val dto = result.data!!
                 Resource.Success(dto.toDomain())
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al responder mensaje")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -88,14 +86,11 @@ class SoporteRepositoryImpl @Inject constructor(
         for (msg in pending) {
             when (val result = remoteDataSource.enviarMensaje(EnviarMensajeDto(msg.contenido))) {
                 is Resource.Success -> {
-                    val synced = msg.copy(
-                        remoteId = result.data?.id,
-                        isPendingCreate = false
-                    )
+                    val synced = msg.copy(remoteId = result.data?.id, isPendingCreate = false)
                     localDataSource.upsert(synced)
                 }
                 is Resource.Error -> return Resource.Error("Falló sincronización")
-                else -> {}
+                is Resource.Loading -> Unit
             }
         }
         return Resource.Success(Unit)
@@ -119,7 +114,7 @@ class SoporteRepositoryImpl @Inject constructor(
                 Resource.Success(Unit)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al sincronizar mensajes")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 }
