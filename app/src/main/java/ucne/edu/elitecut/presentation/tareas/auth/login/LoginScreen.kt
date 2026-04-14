@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.auth.login
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -67,18 +66,77 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn && state.userRole != null) {
             onLoginSuccess(state.userRole!!)
         }
     }
-
     LoginBody(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigateToRegister = onNavigateToRegister
     )
+}
+
+@Composable
+private fun LoginLogoSection() {
+    Image(
+        painter = painterResource(id = R.drawable.logo_elite_cut),
+        contentDescription = "Elite Cut Logo",
+        modifier = Modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .border(width = 2.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape),
+        contentScale = ContentScale.Crop
+    )
+    Spacer(modifier = Modifier.height(24.dp))
+    Text(
+        text = buildAnnotatedString {
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Black, fontSize = 28.sp)) { append("INICIAR ") }
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black, fontSize = 28.sp)) { append("SESIÓN") }
+        },
+        textAlign = TextAlign.Center
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(text = "BIENVENIDO DE VUELTA A ELITE CUT", style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, letterSpacing = 1.5.sp)
+}
+
+@Composable
+private fun LoginPasswordField(state: LoginUiState, onEvent: (LoginUiEvent) -> Unit, colors: androidx.compose.material3.TextFieldColors) {
+    val visibilityIcon = if (state.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+    val visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation()
+    OutlinedTextField(
+        value = state.password,
+        onValueChange = { onEvent(LoginUiEvent.OnPasswordChange(InputValidation.limitLength(it, 30))) },
+        placeholder = { Text(text = "• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingIcon = { Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        trailingIcon = {
+            IconButton(onClick = { onEvent(LoginUiEvent.TogglePasswordVisibility) }) {
+                Icon(imageVector = visibilityIcon, contentDescription = "Toggle password visibility", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        visualTransformation = visualTransformation,
+        modifier = Modifier.fillMaxWidth().testTag("input_password"),
+        singleLine = true, shape = RoundedCornerShape(12.dp), colors = colors
+    )
+}
+
+@Composable
+private fun LoginActionButton(isLoading: Boolean, onEvent: (LoginUiEvent) -> Unit) {
+    Button(
+        onClick = { onEvent(LoginUiEvent.Login) },
+        modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_login"),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+        enabled = !isLoading
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+        } else {
+            Text(text = "INICIAR SESIÓN", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        }
+    }
 }
 
 @Composable
@@ -88,281 +146,60 @@ fun LoginBody(
     onNavigateToRegister: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             onEvent(LoginUiEvent.UserMessageShown)
         }
     }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading && state.correo.isEmpty()) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .testTag("loading"),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
             } else {
+                val textFieldColors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                )
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 32.dp),
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(60.dp))
-
-                    // Logo
-                    Image(
-                        painter = painterResource(id = R.drawable.logo_elite_cut),
-                        contentDescription = "Elite Cut Logo",
-                        modifier = Modifier
-                            .size(120.dp)
-                            .clip(CircleShape)
-                            .border(
-                                width = 2.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = CircleShape
-                            ),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Título "INICIAR SESIÓN"
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(
-                                style = SpanStyle(
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 28.sp
-                                )
-                            ) {
-                                append("INICIAR ")
-                            }
-                            withStyle(
-                                style = SpanStyle(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 28.sp
-                                )
-                            ) {
-                                append("SESIÓN")
-                            }
-                        },
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "BIENVENIDO DE VUELTA A ELITE CUT",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 1.5.sp
-                    )
-
+                    LoginLogoSection()
                     Spacer(modifier = Modifier.height(40.dp))
-
-                    // Label EMAIL
-                    Text(
-                        text = "EMAIL",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxWidth(),
-                        letterSpacing = 1.sp
-                    )
-
+                    Text(text = "EMAIL", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth(), letterSpacing = 1.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Campo Email - máx 60 caracteres
                     OutlinedTextField(
                         value = state.correo,
-                        onValueChange = {
-                            val limited = InputValidation.limitLength(it, 60)
-                            onEvent(LoginUiEvent.OnCorreoChange(limited))
-                        },
-                        placeholder = {
-                            Text(
-                                text = "ejemplo@gmail.com",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Email,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("input_correo"),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        )
+                        onValueChange = { onEvent(LoginUiEvent.OnCorreoChange(InputValidation.limitLength(it, 60))) },
+                        placeholder = { Text(text = "ejemplo@gmail.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Email, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        modifier = Modifier.fillMaxWidth().testTag("input_correo"),
+                        singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
                     )
-
                     Spacer(modifier = Modifier.height(20.dp))
-
-                    // Label CONTRASEÑA + ¿Olvidaste?
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "CONTRASEÑA",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "¿OLVIDASTE TU CONTRASEÑA?",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 0.5.sp
-                        )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(text = "CONTRASEÑA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                        Text(text = "¿OLVIDASTE TU CONTRASEÑA?", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 0.5.sp)
                     }
-
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // Campo Contraseña - máx 30 caracteres
-                    OutlinedTextField(
-                        value = state.password,
-                        onValueChange = {
-                            val limited = InputValidation.limitLength(it, 30)
-                            onEvent(LoginUiEvent.OnPasswordChange(limited))
-                        },
-                        placeholder = {
-                            Text(
-                                text = "• • • • • • • •",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { onEvent(LoginUiEvent.TogglePasswordVisibility) }) {
-                                Icon(
-                                    imageVector = if (state.isPasswordVisible)
-                                        Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = "Toggle password visibility",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        visualTransformation = if (state.isPasswordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("input_password"),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            cursorColor = MaterialTheme.colorScheme.primary,
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-
+                    LoginPasswordField(state = state, onEvent = onEvent, colors = textFieldColors)
                     Spacer(modifier = Modifier.height(32.dp))
-
-                    // Botón Iniciar Sesión
-                    Button(
-                        onClick = { onEvent(LoginUiEvent.Login) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .testTag("btn_login"),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        enabled = !state.isLoading
-                    ) {
-                        if (state.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "INICIAR SESIÓN",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 2.sp
-                            )
-                        }
-                    }
-
+                    LoginActionButton(isLoading = state.isLoading, onEvent = onEvent)
                     Spacer(modifier = Modifier.height(24.dp))
-
-                    // Link a registro
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "¿No tienes cuenta?  ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "REGÍSTRATE",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.clickable { onNavigateToRegister() }
-                        )
+                    Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                        Text(text = "¿No tienes cuenta?  ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "REGÍSTRATE", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onNavigateToRegister() })
                     }
-
                     Spacer(modifier = Modifier.height(32.dp))
-
-                    // Footer
-                    Text(
-                        text = "© 2026 ELITE CUT BARBERSHOP. ALL RIGHTS RESERVED.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth(),
-                        letterSpacing = 0.5.sp
-                    )
-
+                    Text(text = "© 2026 ELITE CUT BARBERSHOP. ALL RIGHTS RESERVED.", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), letterSpacing = 0.5.sp)
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -375,11 +212,7 @@ fun LoginBody(
 private fun LoginBodyPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         LoginBody(
-            state = LoginUiState(
-                isLoading = false,
-                correo = "",
-                password = ""
-            ),
+            state = LoginUiState(isLoading = false, correo = "", password = ""),
             onEvent = {},
             onNavigateToRegister = {}
         )
