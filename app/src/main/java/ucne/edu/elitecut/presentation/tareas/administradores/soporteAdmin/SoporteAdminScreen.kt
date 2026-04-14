@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.administradores.soporteAdmin
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,7 +47,6 @@ fun SoporteAdminBody(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(state.userMessage) { state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(SoporteAdminUiEvent.UserMessageShown) } }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
@@ -75,10 +73,8 @@ fun SoporteAdminBody(
 @Composable
 fun TicketListView(state: SoporteAdminUiState, onEvent: (SoporteAdminUiEvent) -> Unit, modifier: Modifier) {
     val filtros = listOf("TODOS", "PENDIENTE", "RESPONDIDO", "CERRADO")
-
     Column(modifier = modifier.fillMaxSize()) {
         Text("Soporte", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
-
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(filtros) { filtro ->
                 FilterChip(selected = state.filtroActual == filtro, onClick = { onEvent(SoporteAdminUiEvent.OnFiltroChange(filtro)) },
@@ -88,7 +84,6 @@ fun TicketListView(state: SoporteAdminUiState, onEvent: (SoporteAdminUiEvent) ->
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-
         Box(modifier = Modifier.fillMaxSize()) {
             if (state.isLoading) { CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary) }
             else if (state.tickets.isEmpty()) {
@@ -137,11 +132,57 @@ fun TicketItem(ticket: TicketSoporte, onClick: () -> Unit) {
 }
 
 @Composable
+private fun MensajeBubble(msg: ucne.edu.elitecut.domain.model.MensajeConversacion, isAdmin: Boolean) {
+    val alignment = if (isAdmin) Alignment.End else Alignment.Start
+    val cornerStart = if (isAdmin) 16.dp else 4.dp
+    val cornerEnd = if (isAdmin) 4.dp else 16.dp
+    val bgColor = if (isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer
+    val textColor = if (isAdmin) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    val timeColor = if (isAdmin) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = alignment) {
+        Box(
+            modifier = Modifier.widthIn(max = 280.dp)
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = cornerStart, bottomEnd = cornerEnd))
+                .background(bgColor).padding(12.dp)
+        ) {
+            Column {
+                Text(msg.contenido, style = MaterialTheme.typography.bodyMedium, color = textColor)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(msg.fechaEnvio.takeLast(8), style = MaterialTheme.typography.labelSmall, color = timeColor, fontSize = 10.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConversacionInputRow(state: SoporteAdminUiState, conv: ucne.edu.elitecut.domain.model.Conversacion, onEvent: (SoporteAdminUiEvent) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = state.respuestaInput, onValueChange = { onEvent(SoporteAdminUiEvent.OnRespuestaChange(it)) },
+            placeholder = { Text("Escribe respuesta...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            modifier = Modifier.weight(1f).testTag("input_respuesta"), singleLine = false, maxLines = 4, shape = RoundedCornerShape(24.dp),
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        IconButton(
+            onClick = { conv.mensajes.lastOrNull()?.id?.let { onEvent(SoporteAdminUiEvent.ResponderMensaje(it)) } },
+            modifier = Modifier.size(48.dp), enabled = !state.isSending && state.respuestaInput.isNotBlank(),
+            colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+        ) {
+            if (state.isSending) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+            else Icon(Icons.AutoMirrored.Filled.Send, "Enviar")
+        }
+    }
+}
+
+@Composable
 fun ConversacionView(state: SoporteAdminUiState, onEvent: (SoporteAdminUiEvent) -> Unit, modifier: Modifier) {
     val conv = state.conversacion!!
     val listState = rememberLazyListState()
-    LaunchedEffect(conv.mensajes.size) { if (conv.mensajes.isNotEmpty()) listState.animateScrollToItem(conv.mensajes.size - 1) }
-
+    LaunchedEffect(conv.mensajes.size) {
+        if (conv.mensajes.isNotEmpty()) listState.animateScrollToItem(conv.mensajes.size - 1)
+    }
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onEvent(SoporteAdminUiEvent.CloseConversacion) }) {
@@ -149,43 +190,12 @@ fun ConversacionView(state: SoporteAdminUiState, onEvent: (SoporteAdminUiEvent) 
             }
             Text(conv.nombreUsuario, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
         }
-
         LazyColumn(state = listState, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(conv.mensajes, key = { it.id }) { msg ->
-                val isAdmin = msg.tipoMensaje == "ADMIN"
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = if (isAdmin) Alignment.End else Alignment.Start) {
-                    Box(
-                        modifier = Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = if (isAdmin) 16.dp else 4.dp, bottomEnd = if (isAdmin) 4.dp else 16.dp))
-                            .background(if (isAdmin) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer).padding(12.dp)
-                    ) {
-                        Column {
-                            Text(msg.contenido, style = MaterialTheme.typography.bodyMedium, color = if (isAdmin) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(msg.fechaEnvio.takeLast(8), style = MaterialTheme.typography.labelSmall, color = if (isAdmin) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp)
-                        }
-                    }
-                }
+                MensajeBubble(msg = msg, isAdmin = msg.tipoMensaje == "ADMIN")
             }
         }
-
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = state.respuestaInput, onValueChange = { onEvent(SoporteAdminUiEvent.OnRespuestaChange(it)) },
-                placeholder = { Text("Escribe respuesta...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                modifier = Modifier.weight(1f).testTag("input_respuesta"), singleLine = false, maxLines = 4, shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(
-                onClick = { conv.mensajes.lastOrNull()?.id?.let { onEvent(SoporteAdminUiEvent.ResponderMensaje(it)) } },
-                modifier = Modifier.size(48.dp), enabled = !state.isSending && state.respuestaInput.isNotBlank(),
-                colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
-            ) {
-                if (state.isSending) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                else Icon(Icons.AutoMirrored.Filled.Send, "Enviar")
-            }
-        }
+        ConversacionInputRow(state = state, conv = conv, onEvent = onEvent)
     }
 }
 
