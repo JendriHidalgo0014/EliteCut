@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.auth.register
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -68,18 +67,81 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     LaunchedEffect(state.isRegistered) {
         if (state.isRegistered) {
             onRegisterSuccess()
         }
     }
-
     RegisterBody(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigateToLogin = onNavigateToLogin
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PasswordFieldSection(
+    label: String,
+    value: String,
+    isVisible: Boolean,
+    testTag: String,
+    supportingLength: Int,
+    onValueChange: (String) -> Unit,
+    onToggleVisibility: () -> Unit,
+    colors: androidx.compose.material3.TextFieldColors
+) {
+    val visibilityIcon = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+    val visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation()
+    Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
+    Spacer(modifier = Modifier.height(6.dp))
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text("• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        trailingIcon = {
+            IconButton(onClick = onToggleVisibility) {
+                Icon(visibilityIcon, "Toggle password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        supportingText = { Text("Máximo 30 caracteres ($supportingLength/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        visualTransformation = visualTransformation,
+        modifier = Modifier.fillMaxWidth().testTag(testTag),
+        singleLine = true, shape = RoundedCornerShape(12.dp), colors = colors
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FechaPickerDialog(onEvent: (RegisterUiEvent) -> Unit) {
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
+                    .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+                return utcTimeMillis >= todayUtc
+            }
+        }
+    )
+    DatePickerDialog(
+        onDismissRequest = { onEvent(RegisterUiEvent.HideDatePicker) },
+        confirmButton = {
+            TextButton(onClick = {
+                datePickerState.selectedDateMillis?.let { millis ->
+                    val date = java.time.Instant.ofEpochMilli(millis)
+                        .atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                    val formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
+                }
+            }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
+        },
+        dismissButton = {
+            TextButton(onClick = { onEvent(RegisterUiEvent.HideDatePicker) }) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    ) { DatePicker(state = datePickerState) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,14 +152,12 @@ fun RegisterBody(
     onNavigateToLogin: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             onEvent(RegisterUiEvent.UserMessageShown)
         }
     }
-
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -107,7 +167,6 @@ fun RegisterBody(
         focusedTextColor = MaterialTheme.colorScheme.onSurface,
         unfocusedTextColor = MaterialTheme.colorScheme.onSurface
     )
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
@@ -120,56 +179,36 @@ fun RegisterBody(
                 .padding(horizontal = 24.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onNavigateToLogin) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver al login", tint = MaterialTheme.colorScheme.primary)
                 }
                 Text("Registro de Barbero", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Text("Únete a la Élite", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-
             Spacer(modifier = Modifier.height(4.dp))
-
             Text("Crea tu cuenta premium para empezar", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-
             Spacer(modifier = Modifier.height(28.dp))
-
-            // Nombre Completo - solo letras y espacios, máx 50
             Text("Nombre Completo", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.nombre,
-                onValueChange = {
-                    val filtered = InputValidation.filterNombreInput(it, 50)
-                    onEvent(RegisterUiEvent.OnNombreChange(filtered))
-                },
+                onValueChange = { onEvent(RegisterUiEvent.OnNombreChange(InputValidation.filterNombreInput(it, 50))) },
                 placeholder = { Text("Ej. Juan Pérez", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 supportingText = { Text("Solo letras y espacios (${state.nombre.length}/50)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().testTag("input_nombre"),
                 singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Teléfono - formato XXX-XXX-XXXX
             Text("Teléfono", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.telefono,
-                onValueChange = {
-                    val formatted = InputValidation.formatPhoneInput(it)
-                    onEvent(RegisterUiEvent.OnTelefonoChange(formatted))
-                },
+                onValueChange = { onEvent(RegisterUiEvent.OnTelefonoChange(InputValidation.formatPhoneInput(it))) },
                 placeholder = { Text("849-381-6768", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 supportingText = { Text("Formato: XXX-XXX-XXXX", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -177,10 +216,7 @@ fun RegisterBody(
                 modifier = Modifier.fillMaxWidth().testTag("input_telefono"),
                 singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Fecha de Ingreso
             Text("Fecha de Ingreso", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
@@ -195,18 +231,12 @@ fun RegisterBody(
                 modifier = Modifier.fillMaxWidth().testTag("input_fecha"),
                 singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Correo Electrónico - máx 60
             Text("Correo Electrónico", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.correo,
-                onValueChange = {
-                    val limited = InputValidation.limitLength(it, 60)
-                    onEvent(RegisterUiEvent.OnCorreoChange(limited))
-                },
+                onValueChange = { onEvent(RegisterUiEvent.OnCorreoChange(InputValidation.limitLength(it, 60))) },
                 placeholder = { Text("usuario@gmail.com", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Email, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 supportingText = { Text("Debe ser una cuenta de Gmail (${state.correo.length}/60)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -214,57 +244,23 @@ fun RegisterBody(
                 modifier = Modifier.fillMaxWidth().testTag("input_correo"),
                 singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Contraseña - máx 30
-            Text("Contraseña", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(6.dp))
-            OutlinedTextField(
-                value = state.password,
-                onValueChange = {
-                    val limited = InputValidation.limitLength(it, 30)
-                    onEvent(RegisterUiEvent.OnPasswordChange(limited))
-                },
-                placeholder = { Text("• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailingIcon = {
-                    IconButton(onClick = { onEvent(RegisterUiEvent.TogglePasswordVisibility) }) {
-                        Icon(if (state.isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "Toggle password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                supportingText = { Text("Máximo 30 caracteres (${state.password.length}/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                visualTransformation = if (state.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().testTag("input_password"),
-                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+            PasswordFieldSection(
+                label = "Contraseña", value = state.password, isVisible = state.isPasswordVisible,
+                testTag = "input_password", supportingLength = state.password.length,
+                onValueChange = { onEvent(RegisterUiEvent.OnPasswordChange(InputValidation.limitLength(it, 30))) },
+                onToggleVisibility = { onEvent(RegisterUiEvent.TogglePasswordVisibility) },
+                colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Confirmar Contraseña - máx 30
-            Text("Confirmar", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(6.dp))
-            OutlinedTextField(
-                value = state.confirmarPassword,
-                onValueChange = {
-                    val limited = InputValidation.limitLength(it, 30)
-                    onEvent(RegisterUiEvent.OnConfirmarPasswordChange(limited))
-                },
-                placeholder = { Text("• • • • • • • •", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingIcon = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailingIcon = {
-                    IconButton(onClick = { onEvent(RegisterUiEvent.ToggleConfirmarPasswordVisibility) }) {
-                        Icon(if (state.isConfirmarPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, "Toggle confirm password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                supportingText = { Text("Máximo 30 caracteres (${state.confirmarPassword.length}/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                visualTransformation = if (state.isConfirmarPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().testTag("input_confirmar"),
-                singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+            PasswordFieldSection(
+                label = "Confirmar", value = state.confirmarPassword, isVisible = state.isConfirmarPasswordVisible,
+                testTag = "input_confirmar", supportingLength = state.confirmarPassword.length,
+                onValueChange = { onEvent(RegisterUiEvent.OnConfirmarPasswordChange(InputValidation.limitLength(it, 30))) },
+                onToggleVisibility = { onEvent(RegisterUiEvent.ToggleConfirmarPasswordVisibility) },
+                colors = textFieldColors
             )
-
             Spacer(modifier = Modifier.height(28.dp))
-
             Button(
                 onClick = { onEvent(RegisterUiEvent.Register) },
                 modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_register"),
@@ -278,46 +274,16 @@ fun RegisterBody(
                     Text("Registrarse", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
-
             Spacer(modifier = Modifier.height(20.dp))
-
             Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                 Text("¿Ya tienes una cuenta? ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("Inicia sesión", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onNavigateToLogin() })
             }
-
             Spacer(modifier = Modifier.height(24.dp))
         }
-
         if (state.showDatePicker) {
-            val datePickerState = rememberDatePickerState(
-                selectableDates = object : SelectableDates {
-                    override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                        val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
-                            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
-                        return utcTimeMillis >= todayUtc
-                    }
-                }
-            )
-            DatePickerDialog(
-                onDismissRequest = { onEvent(RegisterUiEvent.HideDatePicker) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val date = java.time.Instant.ofEpochMilli(millis)
-                                .atZone(java.time.ZoneOffset.UTC).toLocalDate()
-                            val formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                            onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
-                        }
-                    }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onEvent(RegisterUiEvent.HideDatePicker) }) {
-                        Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            ) { DatePicker(state = datePickerState) }
+            FechaPickerDialog(onEvent = onEvent)
         }
     }
 }
