@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.clientes.detalleCita
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,12 +61,75 @@ fun DetalleCitaScreen(
     onBackClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    DetalleCitaBody(state = state, onEvent = viewModel::onEvent, onBackClick = onBackClick)
+}
 
-    DetalleCitaBody(
-        state = state,
-        onEvent = viewModel::onEvent,
-        onBackClick = onBackClick
-    )
+@Composable
+private fun BarberoFotoAvatar(fotoUrl: String?, nombre: String) {
+    if (fotoUrl != null) {
+        AsyncImage(model = fotoUrl, contentDescription = nombre,
+            modifier = Modifier.size(56.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+    } else {
+        Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp))
+        }
+    }
+}
+
+@Composable
+private fun BarberoCitaCard(cita: Cita) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            BarberoFotoAvatar(fotoUrl = cita.fotoBarbero, nombre = cita.nombreBarbero)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column {
+                Text(cita.nombreBarbero.ifBlank { "Barbero" }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                Text(cita.especialidadBarbero.ifBlank { "Corte" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CitaInfoCard(cita: Cita) {
+    val pagoIcono = if (cita.metodoPago == "TARJETA") Icons.Default.CreditCard else Icons.Default.Store
+    val pagoTexto = if (cita.metodoPago == "TARJETA") "Tarjeta" else "En establecimiento"
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Text("INFORMACIÓN DE LA CITA", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            DetalleRow(Icons.Default.Person, "Cliente", cita.nombreCliente.ifBlank { "—" })
+            Spacer(modifier = Modifier.height(10.dp))
+            DetalleRow(Icons.Default.Phone, "Teléfono", cita.telefonoCliente.ifBlank { "—" })
+            Spacer(modifier = Modifier.height(10.dp))
+            DetalleRow(Icons.Default.CalendarMonth, "Fecha", cita.fechaCita)
+            Spacer(modifier = Modifier.height(10.dp))
+            DetalleRow(Icons.Default.Schedule, "Hora", cita.horaCita)
+            Spacer(modifier = Modifier.height(10.dp))
+            DetalleRow(icon = pagoIcono, label = "Pago", value = pagoTexto)
+            if (cita.montoTotal != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Total", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                    Text("RD$ ${cita.montoTotal}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                }
+            }
+            if (cita.isPendingCreate) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Pendiente de sincronizar con el servidor", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
 }
 
 @Composable
@@ -77,14 +139,12 @@ fun DetalleCitaBody(
     onBackClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             onEvent(DetalleCitaUiEvent.UserMessageShown)
         }
     }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
@@ -102,83 +162,15 @@ fun DetalleCitaBody(
                             fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.width(48.dp))
                     }
-
                     state.cita?.let { cita ->
                         Spacer(modifier = Modifier.height(8.dp))
-
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             EstadoBadge(estado = cita.estado)
                         }
-
                         Spacer(modifier = Modifier.height(20.dp))
-
-                        // Barbero card
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                if (cita.fotoBarbero != null) {
-                                    AsyncImage(model = cita.fotoBarbero, contentDescription = cita.nombreBarbero,
-                                        modifier = Modifier.size(56.dp).clip(CircleShape), contentScale = ContentScale.Crop)
-                                } else {
-                                    Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp))
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(14.dp))
-                                Column {
-                                    Text(cita.nombreBarbero.ifBlank { "Barbero" }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                                    Text(cita.especialidadBarbero.ifBlank { "Corte" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
-                                }
-                            }
-                        }
-
+                        BarberoCitaCard(cita = cita)
                         Spacer(modifier = Modifier.height(20.dp))
-
-                        // Details card
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-                                Text("INFORMACIÓN DE LA CITA", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                DetalleRow(Icons.Default.Person, "Cliente", cita.nombreCliente.ifBlank { "—" })
-                                Spacer(modifier = Modifier.height(10.dp))
-                                DetalleRow(Icons.Default.Phone, "Teléfono", cita.telefonoCliente.ifBlank { "—" })
-                                Spacer(modifier = Modifier.height(10.dp))
-                                DetalleRow(Icons.Default.CalendarMonth, "Fecha", cita.fechaCita)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                DetalleRow(Icons.Default.Schedule, "Hora", cita.horaCita)
-                                Spacer(modifier = Modifier.height(10.dp))
-                                DetalleRow(
-                                    icon = if (cita.metodoPago == "TARJETA") Icons.Default.CreditCard else Icons.Default.Store,
-                                    label = "Pago",
-                                    value = if (cita.metodoPago == "TARJETA") "Tarjeta" else "En establecimiento"
-                                )
-
-                                if (cita.montoTotal != null) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Total", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                                        Text("RD$ ${cita.montoTotal}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-
-                                if (cita.isPendingCreate) {
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Text("Pendiente de sincronizar con el servidor", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
-                                }
-                            }
-                        }
-
+                        CitaInfoCard(cita = cita)
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
@@ -193,8 +185,13 @@ fun DetalleRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Str
         Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+            Text(label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold)
         }
     }
 }
