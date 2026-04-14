@@ -142,7 +142,6 @@ fun EliteCutNavHost(navController: NavHostController) {
                 onNavigateToBarberos = { navController.navigate(Screen.GestionarBarberos) },
                 onNavigateToCitas = { navController.navigate(Screen.GestionarCitas) },
                 onNavigateToSoporte = { navController.navigate(Screen.SoporteAdmin) },
-                onNavigateToUsuarios = { navController.navigate(Screen.GestionarUsuarios) },
                 onNavigateToPerfil = { navController.navigate(Screen.PerfilAdmin) }
             )
         }

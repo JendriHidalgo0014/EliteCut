@@ -10,6 +10,8 @@ import ucne.edu.elitecut.data.remote.dtos.ConfirmacionCitaDto
 import ucne.edu.elitecut.data.remote.dtos.CrearCitaDto
 import ucne.edu.elitecut.data.remote.dtos.HorariosDisponiblesDto
 import javax.inject.Inject
+private const val RESPUESTA_VACIA = "Respuesta vacía del servidor"
+private const val ERROR_RED = "Error de red"
 
 class CitaRemoteDataSource @Inject constructor(
     private val api: EliteCutApi
@@ -22,13 +24,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -40,13 +42,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -58,13 +60,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -76,13 +78,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -94,13 +96,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -112,13 +114,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 
@@ -130,13 +132,13 @@ class CitaRemoteDataSource @Inject constructor(
                 if (body != null && body.success && body.data != null) {
                     Resource.Success(body.data)
                 } else {
-                    Resource.Error(body?.message ?: "Respuesta vacía del servidor")
+                    Resource.Error(body?.message ?: RESPUESTA_VACIA)
                 }
             } else {
                 Resource.Error("HTTP ${response.code()} ${response.message()}")
             }
         } catch (e: Exception) {
-            Resource.Error(e.localizedMessage ?: "Error de red")
+            Resource.Error(e.localizedMessage ?: ERROR_RED)
         }
     }
 }
