@@ -42,13 +42,14 @@ class CitaRepositoryImpl @Inject constructor(
         return when (val result = remoteDataSource.getCita(remoteId)) {
             is Resource.Success -> {
                 val userId = tokenManager.getUserId()?.toString() ?: ""
-                val existing = localDataSource.getByRemoteId(result.data!!.id)
-                val entity = result.data!!.toEntity(existing?.id, clienteId = userId)
+                val data = result.data!!
+                val existing = localDataSource.getByRemoteId(data.id)
+                val entity = data.toEntity(existing?.id, clienteId = userId)
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
             is Resource.Error -> Resource.Success(local.toDomain())
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -64,7 +65,7 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(entity.toDomain())
             }
             is Resource.Error -> Resource.Error(result.message ?: "Cita no encontrada")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -90,12 +91,11 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(remoteId)
             }
             is Resource.Error -> {
-                // Sin internet: guardar localmente como pendiente
                 val pending = cita.copy(isPendingCreate = true)
                 localDataSource.upsert(pending.toEntity())
                 Resource.Success(-1)
             }
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -112,7 +112,7 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(cita)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al actualizar cita")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -126,7 +126,7 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(updated.toDomain())
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al cambiar estado")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -137,7 +137,7 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(HorariosDisponibles(dto.fecha, dto.barberoId, dto.nombreBarbero, dto.horariosDisponibles))
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al obtener horarios")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -150,14 +150,11 @@ class CitaRepositoryImpl @Inject constructor(
             )
             when (val result = remoteDataSource.crearCita(request)) {
                 is Resource.Success -> {
-                    val synced = cita.copy(
-                        remoteId = result.data?.citaId,
-                        isPendingCreate = false
-                    )
+                    val synced = cita.copy(remoteId = result.data?.citaId, isPendingCreate = false)
                     localDataSource.upsert(synced)
                 }
                 is Resource.Error -> return Resource.Error("Falló sincronización")
-                else -> {}
+                is Resource.Loading -> Unit
             }
         }
         return Resource.Success(Unit)
@@ -175,7 +172,7 @@ class CitaRepositoryImpl @Inject constructor(
                 Resource.Success(Unit)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al sincronizar citas")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -183,7 +180,7 @@ class CitaRepositoryImpl @Inject constructor(
         return when (val result = remoteDataSource.getAllCitas(filtro, barberoId, estado)) {
             is Resource.Success -> Resource.Success(Unit)
             is Resource.Error -> Resource.Error(result.message ?: "Error al sincronizar citas")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 }

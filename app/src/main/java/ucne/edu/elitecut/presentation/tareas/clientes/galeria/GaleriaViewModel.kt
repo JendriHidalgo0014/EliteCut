@@ -26,9 +26,7 @@ class GaleriaViewModel @Inject constructor(
     private val _state = MutableStateFlow(GaleriaUiState(isLoading = true))
     val state: StateFlow<GaleriaUiState> = _state.asStateFlow()
 
-    init {
-        loadData()
-    }
+    init { loadData() }
 
     fun onEvent(event: GaleriaUiEvent) {
         when (event) {
@@ -43,28 +41,20 @@ class GaleriaViewModel @Inject constructor(
         when (val result = getBarberoUseCase(barberoId)) {
             is Resource.Success -> {
                 val barbero = result.data
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        barbero = barbero,
-                        galeriaCortes = barbero?.galeriaCortes ?: emptyList()
-                    )
-                }
+                _state.update { it.copy(isLoading = false, barbero = barbero, galeriaCortes = barbero?.galeriaCortes ?: emptyList()) }
             }
             is Resource.Error -> {
-                _state.update {
-                    it.copy(isLoading = false, userMessage = result.message)
-                }
+                _state.update { it.copy(isLoading = false, userMessage = result.message) }
             }
-            else -> {}
+            is Resource.Loading -> Unit
         }
 
         when (val result = getGaleriaUseCase(barberoId)) {
             is Resource.Success -> {
                 _state.update { it.copy(galeriaCortes = result.data ?: emptyList()) }
             }
-            is Resource.Error -> {}
-            else -> {}
+            is Resource.Error -> Unit
+            is Resource.Loading -> Unit
         }
     }
 }
