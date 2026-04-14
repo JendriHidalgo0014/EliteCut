@@ -43,7 +43,7 @@ class BarberoRepositoryImpl @Inject constructor(
                 Resource.Success(entity.toDomain().copy(galeriaCortes = galeria))
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al obtener barbero")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -57,13 +57,14 @@ class BarberoRepositoryImpl @Inject constructor(
         )
         return when (val result = remoteDataSource.crearBarbero(request)) {
             is Resource.Success -> {
-                val existing = localDataSource.getByRemoteId(result.data!!.id)
-                val entity = result.data!!.toEntity(existing?.id)
+                val data = result.data!!
+                val existing = localDataSource.getByRemoteId(data.id)
+                val entity = data.toEntity(existing?.id)
                 localDataSource.upsert(entity)
                 Resource.Success(entity.toDomain())
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al crear barbero")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -71,13 +72,7 @@ class BarberoRepositoryImpl @Inject constructor(
         val request = ActualizarBarberoDto(
             barbero.nombre, barbero.edad, barbero.especialidad, barbero.telefono,
             barbero.fotoUrl, barbero.disponible,
-            barbero.galeriaCortes.map {
-                ImagenCorteRequestDto(
-                    it.imagenUrl,
-                    it.nombreEstilo,
-                    it.orden
-                )
-            }
+            barbero.galeriaCortes.map { ImagenCorteRequestDto(it.imagenUrl, it.nombreEstilo, it.orden) }
         )
         return when (val result = remoteDataSource.actualizarBarbero(id, request)) {
             is Resource.Success -> {
@@ -85,17 +80,15 @@ class BarberoRepositoryImpl @Inject constructor(
                 Resource.Success(barbero)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al actualizar barbero")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
     override suspend fun eliminarBarbero(id: Int): Resource<Unit> {
         return when (val result = remoteDataSource.eliminarBarbero(id)) {
-            is Resource.Success -> {
-                Resource.Success(Unit)
-            }
+            is Resource.Success -> Resource.Success(Unit)
             is Resource.Error -> Resource.Error(result.message ?: "Error al eliminar barbero")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -108,7 +101,7 @@ class BarberoRepositoryImpl @Inject constructor(
                 Resource.Success(imagenes.map { it.toDomain() })
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al obtener galería")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 
@@ -124,7 +117,7 @@ class BarberoRepositoryImpl @Inject constructor(
                 Resource.Success(Unit)
             }
             is Resource.Error -> Resource.Error(result.message ?: "Error al sincronizar barberos")
-            else -> Resource.Loading()
+            is Resource.Loading -> Resource.Loading()
         }
     }
 }
