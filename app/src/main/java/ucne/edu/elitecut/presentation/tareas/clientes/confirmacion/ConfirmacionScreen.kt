@@ -1,5 +1,4 @@
 package ucne.edu.elitecut.presentation.tareas.clientes.confirmacion
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,13 +59,45 @@ fun ConfirmacionScreen(
     onVolverAlHome: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     ConfirmacionBody(
         state = state,
         onEvent = viewModel::onEvent,
         onVerMisCitas = onVerMisCitas,
         onVolverAlHome = onVolverAlHome
     )
+}
+
+private fun metodoPagoIcono(metodoPago: String?) =
+    if (metodoPago == "TARJETA") Icons.Default.CreditCard else Icons.Default.Store
+
+private fun metodoPagoTexto(metodoPago: String?) =
+    if (metodoPago == "TARJETA") "Tarjeta de crédito/débito" else "Pagar en establecimiento"
+
+@Composable
+private fun CitaDetallesCard(cita: Cita?, metodoPago: String?) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Text(text = "DETALLES DE LA CITA", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            ConfirmacionRow(icon = Icons.Default.ContentCut, label = "Barbero", value = cita?.nombreBarbero ?: "—")
+            Spacer(modifier = Modifier.height(12.dp))
+            ConfirmacionRow(icon = Icons.Default.CalendarMonth, label = "Fecha", value = cita?.fechaCita ?: "—")
+            Spacer(modifier = Modifier.height(12.dp))
+            ConfirmacionRow(icon = Icons.Default.Schedule, label = "Hora", value = cita?.horaCita ?: "—")
+            Spacer(modifier = Modifier.height(12.dp))
+            ConfirmacionRow(icon = metodoPagoIcono(metodoPago), label = "Pago", value = metodoPagoTexto(metodoPago))
+            if (cita?.isPendingCreate == true) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "Pendiente de sincronizar con el servidor",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
+            }
+        }
+    }
 }
 
 @Composable
@@ -77,195 +108,59 @@ fun ConfirmacionBody(
     onVolverAlHome: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             onEvent(ConfirmacionUiEvent.UserMessageShown)
         }
     }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .testTag("loading"),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp),
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(60.dp))
-
-                    // Success check icon
                     Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.size(80.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Confirmado",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(44.dp)
-                        )
+                        Icon(imageVector = Icons.Default.Check, contentDescription = "Confirmado",
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
                     }
-
                     Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = "¡Cita Confirmada!",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
-                    )
-
+                    Text(text = "¡Cita Confirmada!", style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Tu reserva ha sido registrada exitosamente",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-
+                    Text(text = "Tu reserva ha sido registrada exitosamente",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(28.dp))
-
-                    // Detalles de la cita
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
-                        ) {
-                            Text(
-                                text = "DETALLES DE LA CITA",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Barbero
-                            ConfirmacionRow(
-                                icon = Icons.Default.ContentCut,
-                                label = "Barbero",
-                                value = state.cita?.nombreBarbero ?: "—"
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Fecha
-                            ConfirmacionRow(
-                                icon = Icons.Default.CalendarMonth,
-                                label = "Fecha",
-                                value = state.cita?.fechaCita ?: "—"
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Hora
-                            ConfirmacionRow(
-                                icon = Icons.Default.Schedule,
-                                label = "Hora",
-                                value = state.cita?.horaCita ?: "—"
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Método de pago
-                            ConfirmacionRow(
-                                icon = if (state.metodoPago == "TARJETA")
-                                    Icons.Default.CreditCard
-                                else
-                                    Icons.Default.Store,
-                                label = "Pago",
-                                value = if (state.metodoPago == "TARJETA")
-                                    "Tarjeta de crédito/débito"
-                                else
-                                    "Pagar en establecimiento"
-                            )
-
-                            if (state.cita?.isPendingCreate == true) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = "Pendiente de sincronizar con el servidor",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-
+                    CitaDetallesCard(cita = state.cita, metodoPago = state.metodoPago)
                     Spacer(modifier = Modifier.height(32.dp))
-
-                    // Ver Mis Citas button
                     Button(
                         onClick = onVerMisCitas,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .testTag("btn_mis_citas"),
+                        modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_mis_citas"),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
                     ) {
-                        Text(
-                            text = "Ver Mis Citas",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(text = "Ver Mis Citas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
-
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    // Volver al Home button
                     OutlinedButton(
                         onClick = onVolverAlHome,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .testTag("btn_home"),
+                        modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_home"),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.primary
-                        ),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true)
                     ) {
-                        Text(
-                            text = "Volver al Home",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(text = "Volver al Home", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
-
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -279,29 +174,12 @@ fun ConfirmacionRow(
     label: String,
     value: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -313,18 +191,10 @@ private fun ConfirmacionBodyPreview() {
         ConfirmacionBody(
             state = ConfirmacionUiState(
                 isLoading = false,
-                cita = Cita(
-                    id = "1",
-                    nombreBarbero = "Carlos Ruiz",
-                    fechaCita = "04/10/2026",
-                    horaCita = "9AM - 10AM",
-                    isPendingCreate = true
-                ),
+                cita = Cita(id = "1", nombreBarbero = "Carlos Ruiz", fechaCita = "04/10/2026", horaCita = "9AM - 10AM", isPendingCreate = true),
                 metodoPago = "ESTABLECIMIENTO"
             ),
-            onEvent = {},
-            onVerMisCitas = {},
-            onVolverAlHome = {}
+            onEvent = {}, onVerMisCitas = {}, onVolverAlHome = {}
         )
     }
 }
