@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.OutlinedButtonDefaults
 import ucne.edu.elitecut.domain.model.Cita
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
@@ -74,27 +73,62 @@ private fun metodoPagoTexto(metodoPago: String?) =
     if (metodoPago == "TARJETA") "Tarjeta de crédito/débito" else "Pagar en establecimiento"
 
 @Composable
-private fun CitaDetallesCard(cita: Cita?, metodoPago: String?) {
+private fun CitaDetallesCard(
+    cita: Cita?,
+    metodoPago: String?)
+{
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-            Text(text = "DETALLES DE LA CITA", style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp))
+        {
+
+            Text(text = "DETALLES DE LA CITA",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            ConfirmacionRow(icon = Icons.Default.ContentCut, label = "Barbero", value = cita?.nombreBarbero ?: "—")
+
+            ConfirmacionRow(
+                icon = Icons.Default.ContentCut,
+                label = "Barbero",
+                value = cita?.nombreBarbero ?: "—"
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            ConfirmacionRow(icon = Icons.Default.CalendarMonth, label = "Fecha", value = cita?.fechaCita ?: "—")
+
+            ConfirmacionRow(
+                icon = Icons.Default.CalendarMonth,
+                label = "Fecha",
+                value = cita?.fechaCita ?: "—"
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            ConfirmacionRow(icon = Icons.Default.Schedule, label = "Hora", value = cita?.horaCita ?: "—")
+
+            ConfirmacionRow(
+                icon = Icons.Default.Schedule,
+                label = "Hora",
+                value = cita?.horaCita ?: "—"
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            ConfirmacionRow(icon = metodoPagoIcono(metodoPago), label = "Pago", value = metodoPagoTexto(metodoPago))
+
+            ConfirmacionRow(
+                icon = metodoPagoIcono(metodoPago),
+                label = "Pago",
+                value = metodoPagoTexto(metodoPago)
+            )
             if (cita?.isPendingCreate == true) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "Pendiente de sincronizar con el servidor",
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
+
+                Text(
+                    text = "Pendiente de sincronizar con el servidor",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -120,38 +154,65 @@ fun ConfirmacionBody(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
                 Column(
                     modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(60.dp))
+
                     Box(
                         modifier = Modifier.size(80.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(imageVector = Icons.Default.Check, contentDescription = "Confirmado",
-                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Confirmado",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(44.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text(text = "¡Cita Confirmada!", style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+
+                    Text(
+                        text = "¡Cita Confirmada!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Tu reserva ha sido registrada exitosamente",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+
+                    Text(
+                        text = "Tu reserva ha sido registrada exitosamente",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
                     Spacer(modifier = Modifier.height(28.dp))
+
                     CitaDetallesCard(cita = state.cita, metodoPago = state.metodoPago)
+
                     Spacer(modifier = Modifier.height(32.dp))
+
                     Button(
                         onClick = onVerMisCitas,
                         modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_mis_citas"),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
-                        Text(text = "Ver Mis Citas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Ver Mis Citas",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
+
                     OutlinedButton(
                         onClick = onVolverAlHome,
                         modifier = Modifier.fillMaxWidth().height(52.dp).testTag("btn_home"),
@@ -159,7 +220,11 @@ fun ConfirmacionBody(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                         border = ButtonDefaults.outlinedButtonBorder(enabled = true)
                     ) {
-                        Text(text = "Volver al Home", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Volver al Home",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -174,12 +239,30 @@ fun ConfirmacionRow(
     label: String,
     value: String
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically)
+    {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
         Spacer(modifier = Modifier.width(12.dp))
         Column {
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -191,10 +274,18 @@ private fun ConfirmacionBodyPreview() {
         ConfirmacionBody(
             state = ConfirmacionUiState(
                 isLoading = false,
-                cita = Cita(id = "1", nombreBarbero = "Carlos Ruiz", fechaCita = "04/10/2026", horaCita = "9AM - 10AM", isPendingCreate = true),
+                cita = Cita(
+                    id = "1",
+                    nombreBarbero = "Carlos Ruiz",
+                    fechaCita = "04/10/2026",
+                    horaCita = "9AM - 10AM",
+                    isPendingCreate = true
+                ),
                 metodoPago = "ESTABLECIMIENTO"
             ),
-            onEvent = {}, onVerMisCitas = {}, onVolverAlHome = {}
+            onEvent = {},
+            onVerMisCitas = {},
+            onVolverAlHome = {}
         )
     }
 }

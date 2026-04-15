@@ -61,72 +61,140 @@ fun DetalleCitaScreen(
     onBackClick: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    DetalleCitaBody(state = state, onEvent = viewModel::onEvent, onBackClick = onBackClick)
+
+    DetalleCitaBody(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBackClick = onBackClick
+    )
 }
 
 @Composable
-private fun BarberoFotoAvatar(fotoUrl: String?, nombre: String) {
+private fun BarberoFotoAvatar(
+    fotoUrl: String?,
+    nombre: String)
+{
     if (fotoUrl != null) {
         AsyncImage(model = fotoUrl, contentDescription = nombre,
-            modifier = Modifier.size(56.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+            modifier = Modifier.size(56.dp).clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
     } else {
-        Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(30.dp))
+        Box(
+            modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center)
+        {
+            Icon(Icons.Default.Person, null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(30.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun BarberoCitaCard(cita: Cita) {
+private fun BarberoCitaCard(cita: Cita)
+{
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically)
+        {
             BarberoFotoAvatar(fotoUrl = cita.fotoBarbero, nombre = cita.nombreBarbero)
             Spacer(modifier = Modifier.width(14.dp))
+
             Column {
-                Text(cita.nombreBarbero.ifBlank { "Barbero" }, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                Text(cita.especialidadBarbero.ifBlank { "Corte" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+                Text(cita.nombreBarbero.ifBlank { "Barbero" },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(cita.especialidadBarbero.ifBlank { "Corte" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 1.sp
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CitaInfoCard(cita: Cita) {
+private fun CitaInfoCard(cita: Cita)
+{
     val pagoIcono = if (cita.metodoPago == "TARJETA") Icons.Default.CreditCard else Icons.Default.Store
     val pagoTexto = if (cita.metodoPago == "TARJETA") "Tarjeta" else "En establecimiento"
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-            Text("INFORMACIÓN DE LA CITA", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(20.dp))
+        {
+            Text("INFORMACIÓN DE LA CITA",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
             Spacer(modifier = Modifier.height(16.dp))
+
             DetalleRow(Icons.Default.Person, "Cliente", cita.nombreCliente.ifBlank { "—" })
             Spacer(modifier = Modifier.height(10.dp))
+
             DetalleRow(Icons.Default.Phone, "Teléfono", cita.telefonoCliente.ifBlank { "—" })
             Spacer(modifier = Modifier.height(10.dp))
+
             DetalleRow(Icons.Default.CalendarMonth, "Fecha", cita.fechaCita)
             Spacer(modifier = Modifier.height(10.dp))
+
             DetalleRow(Icons.Default.Schedule, "Hora", cita.horaCita)
             Spacer(modifier = Modifier.height(10.dp))
-            DetalleRow(icon = pagoIcono, label = "Pago", value = pagoTexto)
+
+            DetalleRow(
+                icon = pagoIcono,
+                label = "Pago",
+                value = pagoTexto
+            )
             if (cita.montoTotal != null) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                )
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Total", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                    Text("RD$ ${cita.montoTotal}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween)
+                {
+                    Text("Total",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text("RD$ ${cita.montoTotal}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
             if (cita.isPendingCreate) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Pendiente de sincronizar con el servidor", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Medium)
+
+                Text("Pendiente de sincronizar con el servidor",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
@@ -149,28 +217,51 @@ fun DetalleCitaBody(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            modifier = Modifier.padding(padding).fillMaxSize()) {
+
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
-                Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()))
+                {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically)
+                    {
+
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onBackground)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
-                        Text("Detalle de Cita", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+                        Text("Detalle de Cita",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
                         Spacer(modifier = Modifier.width(48.dp))
                     }
                     state.cita?.let { cita ->
                         Spacer(modifier = Modifier.height(8.dp))
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center) {
                             EstadoBadge(estado = cita.estado)
                         }
                         Spacer(modifier = Modifier.height(20.dp))
+
                         BarberoCitaCard(cita = cita)
                         Spacer(modifier = Modifier.height(20.dp))
                         CitaInfoCard(cita = cita)
+
                         Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
@@ -180,18 +271,32 @@ fun DetalleCitaBody(
 }
 
 @Composable
-fun DetalleRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+fun DetalleRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String)
+{
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically)
+    {
+        Icon(icon, null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
         Spacer(modifier = Modifier.width(12.dp))
+
         Column {
             Text(label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Text(value,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold)
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -203,10 +308,18 @@ private fun DetalleCitaBodyPreview() {
         DetalleCitaBody(
             state = DetalleCitaUiState(
                 isLoading = false,
-                cita = Cita(id = "1", nombreCliente = "Jendri Hidalgo", telefonoCliente = "809-555-1234",
-                    nombreBarbero = "Carlos Ruiz", especialidadBarbero = "Senior Barber",
-                    fechaCita = "04/10/2026", horaCita = "9AM - 10AM", estado = "PENDIENTE",
-                    metodoPago = "ESTABLECIMIENTO", montoTotal = 500.0)
+                cita = Cita(
+                    id = "1",
+                    nombreCliente = "Jendri Hidalgo",
+                    telefonoCliente = "809-555-1234",
+                    nombreBarbero = "Carlos Ruiz",
+                    especialidadBarbero = "Senior Barber",
+                    fechaCita = "04/10/2026",
+                    horaCita = "9AM - 10AM",
+                    estado = "PENDIENTE",
+                    metodoPago = "ESTABLECIMIENTO",
+                    montoTotal = 500.0
+                )
             ),
             onEvent = {}, onBackClick = {}
         )

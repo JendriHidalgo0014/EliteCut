@@ -103,7 +103,9 @@ fun AdminDashboardBody(
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
                 DashboardContent(state)
             }
@@ -113,34 +115,58 @@ fun AdminDashboardBody(
 
 @Composable
 private fun DashboardContent(state: DashboardUiState) {
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp))
+    {
         item {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
                     Text("Dashboard", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
                     Text("Panel de administración", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Icon(Icons.Default.ContentCut, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Icon(Icons.Default.ContentCut, null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
+
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp))
+            {
                 StatCard("Citas Hoy", state.citasHoy.toString(), Icons.Default.CalendarMonth, Modifier.weight(1f))
                 StatCard("Tickets", state.ticketsPendientes.toString(), Icons.Default.SupportAgent, Modifier.weight(1f))
             }
         }
+
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp))
+            {
                 StatCard("Clientes", state.totalClientes.toString(), Icons.Default.People, Modifier.weight(1f))
                 StatCard("Barberos", state.totalBarberos.toString(), Icons.Default.ContentCut, Modifier.weight(1f))
             }
         }
+
         item { IngresosCard(state.ingresosHoy) }
+
         item {
-            Text("Actividad Reciente", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+            Text("Actividad Reciente",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
+            )
         }
         if (state.actividadReciente.isEmpty()) {
-            item { Text("Sin actividad reciente", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            item { Text("Sin actividad reciente",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         } else {
             items(state.actividadReciente) { actividad -> ActividadItem(actividad) }
         }
@@ -149,47 +175,106 @@ private fun DashboardContent(state: DashboardUiState) {
 
 @Composable
 private fun IngresosCard(ingresosHoy: Double) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer))
+    {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween)
+        {
+
             Column {
-                Text("Ingresos de Hoy", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                Text("RD$ ${String.format("%.2f", ingresosHoy)}", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                Text("Ingresos de Hoy",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Text("RD$ ${String.format("%.2f", ingresosHoy)}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Icon(Icons.Default.AttachMoney, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp))
+            Icon(Icons.Default.AttachMoney, null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(36.dp)
+            )
         }
     }
 }
 
 @Composable
 fun StatCard(title: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
-    Card(modifier = modifier, shape = RoundedCornerShape(14.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer))
+    {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp))
+        {
+            Icon(icon, null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+
             Spacer(modifier = Modifier.height(10.dp))
-            Text(value, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-            Text(title, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Text(value,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+            Text(title,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
 
 @Composable
 fun ActividadItem(actividad: ActividadReciente) {
-    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer))
+    {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically)
+        {
+            Box(
+                modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center)
+            {
                 Icon(
                     imageVector = when (actividad.tipo) {
                         "CITA" -> Icons.Default.CalendarMonth
                         "SOPORTE" -> Icons.Default.SupportAgent
                         else -> Icons.Default.Notifications
                     },
-                    contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp)
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
+
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(actividad.descripcion, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
-                Text(actividad.fecha, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Column(
+                modifier = Modifier.weight(1f)) {
+                Text(actividad.descripcion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(actividad.fecha,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -200,12 +285,21 @@ fun ActividadItem(actividad: ActividadReciente) {
 private fun AdminDashboardPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         AdminDashboardBody(
-            state = DashboardUiState(citasHoy = 12, ticketsPendientes = 3, totalClientes = 145, totalBarberos = 6, ingresosHoy = 15500.0,
+            state = DashboardUiState(
+                citasHoy = 12,
+                ticketsPendientes = 3,
+                totalClientes = 145,
+                totalBarberos = 6,
+                ingresosHoy = 15500.0,
                 actividadReciente = listOf(
                     ActividadReciente("CITA", "Nueva cita agendada por Jendri", "Hace 5 min"),
                     ActividadReciente("SOPORTE", "Ticket de soporte respondido", "Hace 15 min")
                 )),
-            onEvent = {}, onNavigateToBarberos = {}, onNavigateToCitas = {}, onNavigateToSoporte = {}, onNavigateToPerfil = {}
+            onEvent = {},
+            onNavigateToBarberos = {},
+            onNavigateToCitas = {},
+            onNavigateToSoporte = {},
+            onNavigateToPerfil = {}
         )
     }
 }

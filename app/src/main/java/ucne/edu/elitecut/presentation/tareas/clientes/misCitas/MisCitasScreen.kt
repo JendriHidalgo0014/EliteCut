@@ -66,8 +66,11 @@ fun MisCitasScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MisCitasBody(
-        state = state, onEvent = viewModel::onEvent, onCitaClick = onCitaClick,
-        onNavigateToHome = onNavigateToHome, onNavigateToSoporte = onNavigateToSoporte, onNavigateToPerfil = onNavigateToPerfil
+        state = state, onEvent = viewModel::onEvent,
+        onCitaClick = onCitaClick,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToSoporte = onNavigateToSoporte,
+        onNavigateToPerfil = onNavigateToPerfil
     )
 }
 
@@ -94,7 +97,9 @@ fun MisCitasBody(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            ClienteBottomBar(currentRoute = "citas", onNavigate = { route ->
+            ClienteBottomBar(
+                currentRoute = "citas",
+                onNavigate = { route ->
                 when (route) {
                     "home" -> onNavigateToHome()
                     "soporte" -> onNavigateToSoporte()
@@ -103,32 +108,63 @@ fun MisCitasBody(
             })
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Text(text = "Mis Citas", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground,
+        Column(
+            modifier = Modifier.padding(padding).fillMaxSize())
+        {
+            Text(
+                text = "Mis Citas",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
-            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp))
+            {
                 items(filtros) { filtro ->
                     FilterChip(
                         selected = state.filtroActual == filtro,
                         onClick = { onEvent(MisCitasUiEvent.OnFiltroChange(filtro)) },
                         label = { Text(text = filtro, style = MaterialTheme.typography.labelMedium) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer, labelColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Box(modifier = Modifier.fillMaxSize()) {
+
+            Box(
+                modifier = Modifier.fillMaxSize())
+            {
                 if (state.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 } else if (filteredCitas.isEmpty()) {
-                    Text(text = emptyText, modifier = Modifier.align(Alignment.Center).testTag("empty_message"),
-                        style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = emptyText,
+                        modifier = Modifier.align(Alignment.Center).testTag("empty_message"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(items = filteredCitas, key = { it.id }) { cita ->
-                            CitaItem(cita = cita, onClick = { onCitaClick(cita.id) }, onCancelar = { onEvent(MisCitasUiEvent.CancelarCita(cita.id)) })
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp,
+                            vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp))
+                    {
+                        items(
+                            items = filteredCitas,
+                            key = { it.id }) { cita ->
+                            CitaItem(
+                                cita = cita,
+                                onClick = { onCitaClick(cita.id) },
+                                onCancelar = { onEvent(MisCitasUiEvent.CancelarCita(cita.id)) }
+                            )
                         }
                     }
                 }
@@ -138,28 +174,61 @@ fun MisCitasBody(
 }
 
 @Composable
-private fun BarberoAvatar(fotoBarbero: String?, nombreBarbero: String) {
+private fun BarberoAvatar(
+    fotoBarbero: String?,
+    nombreBarbero: String)
+{
     if (fotoBarbero != null) {
-        AsyncImage(model = fotoBarbero, contentDescription = nombreBarbero,
-            modifier = Modifier.size(40.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+        AsyncImage(
+            model = fotoBarbero,
+            contentDescription = nombreBarbero,
+            modifier = Modifier.size(40.dp).clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
     } else {
-        Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+        Box(
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center)
+        {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun CitaPendingRow(cita: Cita, onCancelar: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+private fun CitaPendingRow(
+    cita: Cita,
+    onCancelar: () -> Unit)
+{
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically)
+    {
         if (cita.isPendingCreate) {
-            Text(text = "Pendiente de sincronizar", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+            Text(
+                text = "Pendiente de sincronizar",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }
         if (cita.estado == "PENDIENTE") {
-            IconButton(onClick = onCancelar, modifier = Modifier.size(32.dp)) {
-                Icon(imageVector = Icons.Default.Cancel, contentDescription = "Cancelar cita", tint = MaterialTheme.colorScheme.error)
+            IconButton(
+                onClick = onCancelar,
+                modifier = Modifier.size(32.dp))
+            {
+                Icon(
+                    imageVector = Icons.Default.Cancel,
+                    contentDescription = "Cancelar cita",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -176,35 +245,88 @@ fun CitaItem(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    BarberoAvatar(fotoBarbero = cita.fotoBarbero, nombreBarbero = cita.nombreBarbero)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp))
+        {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween)
+            {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically)
+                {
+                    BarberoAvatar(
+                        fotoBarbero = cita.fotoBarbero,
+                        nombreBarbero = cita.nombreBarbero
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
+
                     Column {
-                        Text(text = cita.nombreBarbero.ifBlank { "Barbero" }, style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(text = cita.especialidadBarbero.ifBlank { "Corte" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = cita.nombreBarbero.ifBlank { "Barbero" },
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = cita.especialidadBarbero.ifBlank { "Corte" },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
                 EstadoBadge(estado = cita.estado)
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(20.dp))
+            {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically)
+                {
+                    Icon(
+                        imageVector = Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = cita.fechaCita, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+
+                    Text(
+                        text = cita.fechaCita,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically)
+                {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = cita.horaCita, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+
+                    Text(
+                        text = cita.horaCita,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
             if (cita.isPendingCreate || cita.estado == "PENDIENTE") {
                 Spacer(modifier = Modifier.height(8.dp))
-                CitaPendingRow(cita = cita, onCancelar = onCancelar)
+                CitaPendingRow(
+                    cita = cita,
+                    onCancelar = onCancelar
+                )
             }
         }
     }
@@ -219,8 +341,17 @@ fun EstadoBadge(estado: String) {
         "CANCELADA" -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(color.copy(alpha = 0.15f)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-        Text(text = estado, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+    Box(
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(color.copy(alpha = 0.15f)).padding(horizontal = 10.dp,
+            vertical = 4.dp))
+    {
+        Text(
+            text = estado,
+            style = MaterialTheme.typography.labelSmall,
+            color = color,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        )
     }
 }
 
@@ -232,13 +363,46 @@ private fun MisCitasBodyPreview() {
             state = MisCitasUiState(
                 isLoading = false,
                 citas = listOf(
-                    Cita(id = "1", nombreBarbero = "Carlos Ruiz", especialidadBarbero = "Senior Barber", fechaCita = "04/10/2026", horaCita = "9AM - 10AM", estado = "PENDIENTE"),
-                    Cita(id = "2", nombreBarbero = "Santi Vera", especialidadBarbero = "Stylist", fechaCita = "04/11/2026", horaCita = "2PM - 3PM", estado = "CONFIRMADA"),
-                    Cita(id = "3", nombreBarbero = "Javier Soto", especialidadBarbero = "Master Barber", fechaCita = "04/05/2026", horaCita = "10AM - 11AM", estado = "COMPLETADA"),
-                    Cita(id = "4", nombreBarbero = "Leo M.", especialidadBarbero = "Beard Specialist", fechaCita = "04/03/2026", horaCita = "4PM - 5PM", estado = "CANCELADA", isPendingCreate = true)
+                    Cita(
+                        id = "1",
+                        nombreBarbero = "Carlos Ruiz",
+                        especialidadBarbero = "Senior Barber",
+                        fechaCita = "04/10/2026",
+                        horaCita = "9AM - 10AM",
+                        estado = "PENDIENTE"
+                    ),
+                    Cita(
+                        id = "2",
+                        nombreBarbero = "Santi Vera",
+                        especialidadBarbero = "Stylist",
+                        fechaCita = "04/11/2026",
+                        horaCita = "2PM - 3PM",
+                        estado = "CONFIRMADA"
+                    ),
+                    Cita(
+                        id = "3",
+                        nombreBarbero = "Javier Soto",
+                        especialidadBarbero = "Master Barber",
+                        fechaCita = "04/05/2026",
+                        horaCita = "10AM - 11AM",
+                        estado = "COMPLETADA"
+                    ),
+                    Cita(
+                        id = "4",
+                        nombreBarbero = "Leo M.",
+                        especialidadBarbero = "Beard Specialist",
+                        fechaCita = "04/03/2026",
+                        horaCita = "4PM - 5PM",
+                        estado = "CANCELADA",
+                        isPendingCreate = true
+                    )
                 )
             ),
-            onEvent = {}, onCitaClick = {}, onNavigateToHome = {}, onNavigateToSoporte = {}, onNavigateToPerfil = {}
+            onEvent = {},
+            onCitaClick = {},
+            onNavigateToHome = {},
+            onNavigateToSoporte = {},
+            onNavigateToPerfil = {}
         )
     }
 }

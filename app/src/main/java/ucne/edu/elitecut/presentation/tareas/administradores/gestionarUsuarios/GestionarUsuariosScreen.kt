@@ -28,13 +28,24 @@ import ucne.edu.elitecut.ui.theme.MaterialTheme
 @Composable
 fun GestionarUsuariosScreen(
     viewModel: GestionarUsuariosViewModel = hiltViewModel(),
-    onNavigateToDashboard: () -> Unit, onNavigateToBarberos: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
+    onNavigateToBarberos: () -> Unit,
     onNavigateToCitas: () -> Unit,
     onNavigateToSoporte: () -> Unit,
     onNavigateToPerfil: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    GestionarUsuariosBody(state, viewModel::onEvent, onNavigateToDashboard, onNavigateToBarberos, onNavigateToCitas, onNavigateToPerfil, onNavigateToSoporte)
+
+    GestionarUsuariosBody(
+        state,
+        viewModel::onEvent,
+        onNavigateToDashboard,
+        onNavigateToBarberos,
+        onNavigateToCitas,
+        onNavigateToPerfil,
+        onNavigateToSoporte
+    )
+
 }
 
 @Composable
@@ -48,13 +59,17 @@ fun GestionarUsuariosBody(
     onNavigateToPerfil: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(state.userMessage) { state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(GestionarUsuariosUiEvent.UserMessageShown) } }
+
+    LaunchedEffect(state.userMessage) { state.userMessage?.let { snackbarHostState.showSnackbar(it);
+        onEvent(GestionarUsuariosUiEvent.UserMessageShown) }
+    }
 
     val filtered = if (state.searchQuery.isBlank()) state.usuarios
     else state.usuarios.filter { it.nombre.contains(state.searchQuery, true) || it.correo.contains(state.searchQuery, true) }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AdminBottomBar(currentRoute = "usuarios") { route ->
                 when (route) {
@@ -66,29 +81,54 @@ fun GestionarUsuariosBody(
                 }
             }
         }    ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Text("Gestionar Usuarios", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
+        Column(
+            modifier = Modifier.padding(padding).fillMaxSize()) {
+
+            Text("Gestionar Usuarios",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(16.dp)
+            )
 
             OutlinedTextField(
-                value = state.searchQuery, onValueChange = { onEvent(GestionarUsuariosUiEvent.OnSearchChange(it)) },
-                placeholder = { Text("Buscar usuario...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                value = state.searchQuery,
+                onValueChange = { onEvent(GestionarUsuariosUiEvent.OnSearchChange(it)) },
+                placeholder = { Text("Buscar usuario...",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.Search, null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("search_bar"),
                 singleLine = true, shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (state.isLoading) { CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary) }
-                else if (filtered.isEmpty()) { Text("No se encontraron usuarios", modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Box(
+                modifier = Modifier.fillMaxSize()) {
+                if (state.isLoading) { CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                    color = MaterialTheme.colorScheme.primary) }
+                else if (filtered.isEmpty()) { Text("No se encontraron usuarios",
+                    modifier = Modifier.align(Alignment.Center),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 else {
-                    LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(filtered, key = { it.id }) { usuario ->
-                            UsuarioItem(usuario, onEliminar = { onEvent(GestionarUsuariosUiEvent.EliminarUsuario(usuario.id)) })
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 16.dp,
+                        vertical = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(
+                            filtered,
+                            key = { it.id }) { usuario ->
+                            UsuarioItem(usuario,
+                                onEliminar = { onEvent(GestionarUsuariosUiEvent.EliminarUsuario(usuario.id)) }
+                            )
                         }
                     }
                 }
@@ -98,31 +138,42 @@ fun GestionarUsuariosBody(
 }
 
 @Composable
-fun UsuarioItem(usuario: Usuario, onEliminar: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth(),
+fun UsuarioItem(
+    usuario: Usuario,
+    onEliminar: () -> Unit)
+{
+    Card(
+        modifier = Modifier.fillMaxWidth(),
 
         shape = RoundedCornerShape(14.dp),
 
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
 
-        Row(modifier = Modifier.fillMaxWidth().padding(12.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically) {
 
-            Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            Box(
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center) {
-                Text(usuario.nombre.take(1).uppercase(),
+
+                Text(
+                    usuario.nombre.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold)
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)) {
                 Text(usuario.nombre,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold, maxLines = 1,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis)
                 Text(usuario.correo,
                     style = MaterialTheme.typography.bodySmall,
@@ -138,7 +189,8 @@ fun UsuarioItem(usuario: Usuario, onEliminar: () -> Unit) {
 
             IconButton(onClick = onEliminar) {
                 Icon(Icons.Default.Delete,"Eliminar",
-                    tint = MaterialTheme.colorScheme.error)
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -150,10 +202,23 @@ private fun GestionarUsuariosPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         GestionarUsuariosBody(
             state = GestionarUsuariosUiState(usuarios = listOf(
-                Usuario(id = "1", nombre = "Jendri Hidalgo", correo = "jendri@gmail.com", rol = "CLIENTE"),
-                Usuario(id = "2", nombre = "Admin Master", correo = "admin@gmail.com", rol = "ADMIN")
+                Usuario(
+                    id = "1",
+                    nombre = "Jendri Hidalgo",
+                    correo = "jendri@gmail.com",
+                    rol = "CLIENTE"),
+                Usuario(
+                    id = "2",
+                    nombre = "Admin Master",
+                    correo = "admin@gmail.com",
+                    rol = "ADMIN")
             )),
-            onEvent = {}, onNavigateToDashboard = {}, onNavigateToBarberos = {}, onNavigateToCitas = {}, onNavigateToPerfil = {}, onNavigateToSoporte = {}
+            onEvent = {},
+            onNavigateToDashboard = {},
+            onNavigateToBarberos = {},
+            onNavigateToCitas = {},
+            onNavigateToPerfil = {},
+            onNavigateToSoporte = {}
         )
     }
 }

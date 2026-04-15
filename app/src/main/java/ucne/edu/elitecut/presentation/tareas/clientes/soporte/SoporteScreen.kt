@@ -61,48 +61,94 @@ fun SoporteScreen(
     onNavigateToPerfil: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SoporteBody(state = state, onEvent = viewModel::onEvent,
-        onNavigateToHome = onNavigateToHome, onNavigateToCitas = onNavigateToCitas, onNavigateToPerfil = onNavigateToPerfil)
+    SoporteBody(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToCitas = onNavigateToCitas,
+        onNavigateToPerfil = onNavigateToPerfil
+    )
 }
 
 @Composable
 private fun SoporteEmptyState() {
-    Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Icon(imageVector = Icons.Default.SupportAgent, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
+    Column(
+        modifier = Modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
+        Box(
+            modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center)
+        {
+            Icon(
+                imageVector = Icons.Default.SupportAgent,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(34.dp)
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Bienvenido al soporte", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+
+        Text(
+            text = "Bienvenido al soporte",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Bold
+        )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = "Envía un mensaje y nuestro equipo te responderá lo antes posible",
-            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+
+        Text(
+            text = "Envía un mensaje y nuestro equipo te responderá lo antes posible",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
 @Composable
-private fun SoporteInputRow(state: SoporteUiState, onEvent: (SoporteUiEvent) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+private fun SoporteInputRow(
+    state: SoporteUiState,
+    onEvent: (SoporteUiEvent) -> Unit)
+{
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically)
+    {
         OutlinedTextField(
             value = state.mensajeInput,
             onValueChange = { onEvent(SoporteUiEvent.OnMensajeChange(it)) },
-            placeholder = { Text("Escribe tu mensaje...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            placeholder = { Text("Escribe tu mensaje...",
+                color = MaterialTheme.colorScheme.onSurfaceVariant) },
             modifier = Modifier.weight(1f).testTag("input_mensaje"),
-            singleLine = false, maxLines = 4, shape = RoundedCornerShape(24.dp),
+            singleLine = false,
+            maxLines = 4,
+            shape = RoundedCornerShape(24.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
             )
         )
         Spacer(modifier = Modifier.width(8.dp))
+
         IconButton(
             onClick = { onEvent(SoporteUiEvent.EnviarMensaje) },
             modifier = Modifier.size(48.dp).testTag("btn_enviar"),
-            colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+            colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary),
             enabled = !state.isSending && state.mensajeInput.isNotBlank()
         ) {
             if (state.isSending) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
             } else {
                 Icon(Icons.AutoMirrored.Filled.Send, "Enviar mensaje")
             }
@@ -146,27 +192,52 @@ fun SoporteBody(
             })
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().imePadding()) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Text(text = "Soporte y Ayuda", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+        Column(
+            modifier = Modifier.padding(padding).fillMaxSize().imePadding())
+        {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp))
+            {
+                Text(
+                    text = "Soporte y Ayuda",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "¿En qué podemos ayudarte?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                Text(
+                    text = "¿En qué podemos ayudarte?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Box(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier.weight(1f))
+            {
                 when {
-                    state.isLoading && allMessages.isEmpty() -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
-                    allMessages.isEmpty() -> Box(modifier = Modifier.align(Alignment.Center)) { SoporteEmptyState() }
+                    state.isLoading && allMessages.isEmpty() -> CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center).testTag("loading"),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    allMessages.isEmpty() -> Box(
+                        modifier = Modifier.align(Alignment.Center)
+                    ) { SoporteEmptyState() }
                     else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp))
+                    {
                         items(allMessages, key = { it.id }) { message -> ChatBubble(message = message) }
                     }
                 }
             }
-            SoporteInputRow(state = state, onEvent = onEvent)
+            SoporteInputRow(
+                state = state,
+                onEvent = onEvent
+            )
         }
     }
 }
-
 data class ChatMessage(
     val id: String,
     val contenido: String,
@@ -178,12 +249,28 @@ data class ChatMessage(
 
 @Composable
 private fun AdminLabel(message: ChatMessage) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
-        Box(modifier = Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Icon(imageVector = Icons.Default.SupportAgent, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(bottom = 4.dp))
+    {
+        Box(
+            modifier = Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Default.SupportAgent,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(14.dp)
+            )
         }
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = message.nombreRemitente, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+
+        Text(
+            text = message.nombreRemitente,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -194,13 +281,30 @@ private fun BubbleContent(message: ChatMessage) {
     val timeColor = if (isCliente) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
     val pendingColor = if (isCliente) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.secondary
     Column {
-        Text(text = message.contenido, style = MaterialTheme.typography.bodyMedium, color = textColor)
+        Text(
+            text = message.contenido,
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor
+        )
         Spacer(modifier = Modifier.height(4.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = if (isCliente) Arrangement.End else Arrangement.Start) {
-            Text(text = message.fecha.takeLast(8), style = MaterialTheme.typography.labelSmall, color = timeColor, fontSize = 10.sp)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = if (isCliente) Arrangement.End else Arrangement.Start) {
+            Text(
+                text = message.fecha.takeLast(8),
+                style = MaterialTheme.typography.labelSmall,
+                color = timeColor,
+                fontSize = 10.sp
+            )
             if (message.isPending) {
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "⏳ Enviando...", style = MaterialTheme.typography.labelSmall, color = pendingColor, fontSize = 10.sp)
+                Text(
+                    text = "⏳ Enviando...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = pendingColor,
+                    fontSize = 10.sp
+                )
             }
         }
     }
@@ -212,7 +316,10 @@ fun ChatBubble(message: ChatMessage) {
     val cornerStart = if (isCliente) 16.dp else 4.dp
     val cornerEnd = if (isCliente) 4.dp else 16.dp
     val bgColor = if (isCliente) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = if (isCliente) Alignment.End else Alignment.Start) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = if (isCliente) Alignment.End else Alignment.Start)
+    {
         if (!isCliente) AdminLabel(message = message)
         Box(
             modifier = Modifier.widthIn(max = 280.dp)
@@ -242,10 +349,18 @@ private fun SoporteBodyPreview() {
                         tipoMensaje = "ADMIN", nombreRemitente = "Soporte Elite Cut", fechaEnvio = "2026-04-07 14:40:00", estado = "RESPONDIDO")
                 ),
                 mensajesLocales = listOf(
-                    MensajeSoporte(id = "local-1", contenido = "Perfecto, muchas gracias!", tipoMensaje = "CLIENTE", fechaEnvio = "2026-04-07 14:42:00", isPendingCreate = true)
+                    MensajeSoporte(
+                        id = "local-1",
+                        contenido = "Perfecto, muchas gracias!",
+                        tipoMensaje = "CLIENTE",
+                        fechaEnvio = "2026-04-07 14:42:00",
+                        isPendingCreate = true)
                 )
             ),
-            onEvent = {}, onNavigateToHome = {}, onNavigateToCitas = {}, onNavigateToPerfil = {}
+            onEvent = {},
+            onNavigateToHome = {},
+            onNavigateToCitas = {},
+            onNavigateToPerfil = {}
         )
     }
 }

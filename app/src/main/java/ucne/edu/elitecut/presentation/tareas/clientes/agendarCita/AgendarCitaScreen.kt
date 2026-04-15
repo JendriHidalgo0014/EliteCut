@@ -74,7 +74,11 @@ fun AgendarCitaScreen(
     LaunchedEffect(state.citaCreadaOffline) {
         if (state.citaCreadaOffline) { onBackClick() }
     }
-    AgendarCitaBody(state = state, onEvent = viewModel::onEvent, onBackClick = onBackClick)
+    AgendarCitaBody(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBackClick = onBackClick
+    )
 }
 
 @Composable
@@ -103,8 +107,13 @@ private fun HorarioSlotBox(
         modifier = modifier.height(40.dp).height(40.dp).clip(RoundedCornerShape(8.dp)).then(bgModifier).then(clickableModifier),
         contentAlignment = Alignment.Center
     ) {
-        Text(slot, style = MaterialTheme.typography.labelSmall, fontSize = 11.sp,
-            color = textColor, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+        Text(
+            slot,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 11.sp,
+            color = textColor,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 
@@ -119,9 +128,15 @@ private fun HorarioGrid(
     val slotsConReceso = buildList {
         allSlots.forEachIndexed { index, slot -> add(slot); if (index == 4) add(recesoLabel) }
     }
-    Column(modifier = Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp))
+    {
         slotsConReceso.chunked(3).forEach { row ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp))
+            {
                 row.forEach { slot ->
                     HorarioSlotBox(
                         slot = slot,
@@ -140,7 +155,9 @@ private fun HorarioGrid(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AgendarFechaPickerDialog(onEvent: (AgendarCitaUiEvent) -> Unit) {
+private fun AgendarFechaPickerDialog(
+    onEvent: (AgendarCitaUiEvent) -> Unit)
+{
     val datePickerState = rememberDatePickerState(
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
@@ -149,6 +166,7 @@ private fun AgendarFechaPickerDialog(onEvent: (AgendarCitaUiEvent) -> Unit) {
             }
         }
     )
+
     DatePickerDialog(
         onDismissRequest = { onEvent(AgendarCitaUiEvent.HideDatePicker) },
         confirmButton = {
@@ -165,16 +183,25 @@ private fun AgendarFechaPickerDialog(onEvent: (AgendarCitaUiEvent) -> Unit) {
 }
 
 @Composable
-private fun ContinuarPagoButton(isLoading: Boolean, onEvent: (AgendarCitaUiEvent) -> Unit) {
+private fun ContinuarPagoButton(
+    isLoading: Boolean,
+    onEvent: (AgendarCitaUiEvent) -> Unit)
+{
     Button(
         onClick = { onEvent(AgendarCitaUiEvent.ContinuarAlPago) },
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(52.dp).testTag("btn_continuar_pago"),
         shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
         enabled = !isLoading
     ) {
-        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Text("Continuar al Pago", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp),
+            color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+        else Text("Continuar al Pago",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -186,81 +213,182 @@ fun AgendarCitaBody(
     onBackClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(state.userMessage) {
         state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(AgendarCitaUiEvent.UserMessageShown) }
     }
+
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh, unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        cursorColor = MaterialTheme.colorScheme.primary, focusedTextColor = MaterialTheme.colorScheme.onSurface, unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        cursorColor = MaterialTheme.colorScheme.primary,
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
     )
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onBackground) }
-                Text("Agendar Cita", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background) { padding ->
+
+        Column(
+
+            modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp,
+                    vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+
+                IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver",
+                    tint = MaterialTheme.colorScheme.onBackground)
+                }
+
+                Text("Agendar Cita", style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.width(48.dp))
             }
-            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.ContentCut, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(30.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+
+                Box(
+                    modifier = Modifier.size(60.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center) {
+
+                    Icon(Icons.Default.ContentCut, null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(30.dp)
+                    )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("RESERVA PREMIUM", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+
+                Text("RESERVA PREMIUM",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Información Personal", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Text("Información Personal",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(modifier = Modifier.height(10.dp))
-            Text("Nombre", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Text("Nombre",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(modifier = Modifier.height(6.dp))
+
             OutlinedTextField(
-                value = state.nombre, onValueChange = {},
-                leadingIcon = { Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                value = state.nombre,
+                onValueChange = {},
+                leadingIcon = { Icon(Icons.Default.Person, null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_nombre"),
-                singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(modifier = Modifier.weight(0.35f)) {
-                    Text("Edad", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp))
+            {
+                Column(
+                    modifier = Modifier.weight(0.35f)) {
+
+                    Text("Edad",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
+
                     OutlinedTextField(
                         value = state.edad,
                         onValueChange = { onEvent(AgendarCitaUiEvent.OnEdadChange(InputValidation.filterDigitsOnly(it, 3))) },
-                        placeholder = { Text("25", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        placeholder = { Text("25",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth().testTag("input_edad"),
-                        singleLine = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = textFieldColors
                     )
                 }
-                Column(modifier = Modifier.weight(0.65f)) {
-                    Text("Teléfono", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(
+                    modifier = Modifier.weight(0.65f))
+                {
+                    Text("Teléfono",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
+
                     OutlinedTextField(
-                        value = state.telefono, onValueChange = {},
-                        leadingIcon = { Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                        value = state.telefono,
+                        onValueChange = {},
+                        leadingIcon = { Icon(Icons.Default.Phone, null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         modifier = Modifier.fillMaxWidth().testTag("input_telefono"),
-                        singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                        singleLine = true,
+                        readOnly = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = textFieldColors
                     )
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Detalles de la Cita", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Text("Detalles de la Cita",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(modifier = Modifier.height(10.dp))
-            Text("Día de la cita", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Text("Día de la cita",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
             Spacer(modifier = Modifier.height(6.dp))
+
             OutlinedTextField(
-                value = state.fechaCita, onValueChange = {},
-                placeholder = { Text("Seleccionar fecha", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingIcon = { Icon(Icons.Default.CalendarToday, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailingIcon = { IconButton(onClick = { onEvent(AgendarCitaUiEvent.ShowDatePicker) }) { Icon(Icons.Default.CalendarToday, "Seleccionar fecha", tint = MaterialTheme.colorScheme.primary) } },
+                value = state.fechaCita,
+                onValueChange = {},
+                placeholder = { Text("Seleccionar fecha",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.CalendarToday, null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                trailingIcon = { IconButton(onClick = { onEvent(AgendarCitaUiEvent.ShowDatePicker) }) { Icon(Icons.Default.CalendarToday, "Seleccionar fecha",
+                    tint = MaterialTheme.colorScheme.primary) } },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("input_fecha"),
-                singleLine = true, readOnly = true, shape = RoundedCornerShape(12.dp), colors = textFieldColors
+                singleLine = true,
+                readOnly = true,
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Hora de cita", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Text("Hora de cita",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(8.dp))
+
             HorarioGrid(
                 allSlots = AgendarCitaViewModel.TODOS_LOS_HORARIOS,
                 horariosDisponibles = state.horariosDisponibles,
@@ -268,7 +396,9 @@ fun AgendarCitaBody(
                 onEvent = onEvent
             )
             Spacer(modifier = Modifier.height(24.dp))
+
             ContinuarPagoButton(isLoading = state.isLoading, onEvent = onEvent)
+
             Spacer(modifier = Modifier.height(24.dp))
         }
         if (state.showDatePicker) {
@@ -282,9 +412,15 @@ fun AgendarCitaBody(
 private fun AgendarCitaBodyPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         AgendarCitaBody(
-            state = AgendarCitaUiState(isLoading = false, nombre = "Jendri Hidalgo", telefono = "849-381-6768",
-                nombreBarbero = "Carlos Ruiz", horariosDisponibles = AgendarCitaViewModel.TODOS_LOS_HORARIOS, horaCita = "7AM - 8AM"),
-            onEvent = {}, onBackClick = {}
+            state = AgendarCitaUiState(
+                isLoading = false,
+                nombre = "Jendri Hidalgo",
+                telefono = "849-381-6768",
+                nombreBarbero = "Carlos Ruiz",
+                horariosDisponibles = AgendarCitaViewModel.TODOS_LOS_HORARIOS,
+                horaCita = "7AM - 8AM"),
+            onEvent = {},
+            onBackClick = {}
         )
     }
 }
