@@ -12,6 +12,7 @@ import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.EliminarBarberoUseCase
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.ObserveBarberosUseCase
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.SyncBarberosUseCase
+import ucne.edu.elitecut.presentation.utils.BarberoSyncDelegate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,31 +25,26 @@ class GestionarBarberosViewModel @Inject constructor(
     private val _state = MutableStateFlow(GestionarBarberosUiState(isLoading = true))
     val state: StateFlow<GestionarBarberosUiState> = _state.asStateFlow()
 
+    private val syncDelegate = BarberoSyncDelegate(
+        observeBarberosUseCase = observeBarberosUseCase,
+        syncBarberosUseCase = syncBarberosUseCase,
+        scope = viewModelScope,
+        onBarberos = { list -> _state.update { it.copy(isLoading = false, barberos = list) } },
+        onSyncSuccess = { _state.update { it.copy(isLoading = false) } },
+        onSyncError = { message -> _state.update { it.copy(isLoading = false, userMessage = message) } }
+    )
+
     init {
-        observeBarberos()
-        syncFromApi()
+        syncDelegate.observe()
+        syncDelegate.sync()
     }
 
     fun onEvent(event: GestionarBarberosUiEvent) {
         when (event) {
             is GestionarBarberosUiEvent.OnSearchChange -> _state.update { it.copy(searchQuery = event.query) }
             is GestionarBarberosUiEvent.EliminarBarbero -> eliminar(event.id)
-            is GestionarBarberosUiEvent.LoadBarberos -> syncFromApi()
+            is GestionarBarberosUiEvent.LoadBarberos -> syncDelegate.sync()
             is GestionarBarberosUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
-        }
-    }
-
-    private fun observeBarberos() = viewModelScope.launch {
-        observeBarberosUseCase().collect { barberos ->
-            _state.update { it.copy(isLoading = false, barberos = barberos) }
-        }
-    }
-
-    private fun syncFromApi() = viewModelScope.launch {
-        when (val result = syncBarberosUseCase()) {
-            is Resource.Success -> _state.update { it.copy(isLoading = false) }
-            is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message) }
-            is Resource.Loading -> Unit
         }
     }
 
