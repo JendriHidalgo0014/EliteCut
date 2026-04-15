@@ -1,4 +1,5 @@
 package ucne.edu.elitecut.presentation.tareas.auth.register
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,21 +26,16 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,7 +53,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ucne.edu.elitecut.presentation.utils.FutureDatePickerDialog
 import ucne.edu.elitecut.presentation.utils.InputValidation
+import ucne.edu.elitecut.presentation.utils.eliteCutTextFieldColors
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
 @Composable
@@ -79,21 +77,25 @@ fun RegisterScreen(
     )
 }
 
+data class PasswordFieldConfig(
+    val label: String,
+    val testTag: String,
+    val supportingLength: Int
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PasswordFieldSection(
-    label: String,
+    config: PasswordFieldConfig,
     value: String,
     isVisible: Boolean,
-    testTag: String,
-    supportingLength: Int,
     onValueChange: (String) -> Unit,
     onToggleVisibility: () -> Unit,
-    colors: androidx.compose.material3.TextFieldColors
+    colors: TextFieldColors
 ) {
     val visibilityIcon = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
     val visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation()
-    Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
+    Text(config.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
     Spacer(modifier = Modifier.height(6.dp))
     OutlinedTextField(
         value = value,
@@ -105,43 +107,11 @@ private fun PasswordFieldSection(
                 Icon(visibilityIcon, "Toggle password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        supportingText = { Text("Máximo 30 caracteres ($supportingLength/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        supportingText = { Text("Máximo 30 caracteres (${config.supportingLength}/30)", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
         visualTransformation = visualTransformation,
-        modifier = Modifier.fillMaxWidth().testTag(testTag),
+        modifier = Modifier.fillMaxWidth().testTag(config.testTag),
         singleLine = true, shape = RoundedCornerShape(12.dp), colors = colors
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FechaPickerDialog(onEvent: (RegisterUiEvent) -> Unit) {
-    val datePickerState = rememberDatePickerState(
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val todayUtc = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
-                    .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
-                return utcTimeMillis >= todayUtc
-            }
-        }
-    )
-    DatePickerDialog(
-        onDismissRequest = { onEvent(RegisterUiEvent.HideDatePicker) },
-        confirmButton = {
-            TextButton(onClick = {
-                datePickerState.selectedDateMillis?.let { millis ->
-                    val date = java.time.Instant.ofEpochMilli(millis)
-                        .atZone(java.time.ZoneOffset.UTC).toLocalDate()
-                    val formatted = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    onEvent(RegisterUiEvent.OnFechaIngresoChange(formatted))
-                }
-            }) { Text("Confirmar", color = MaterialTheme.colorScheme.primary) }
-        },
-        dismissButton = {
-            TextButton(onClick = { onEvent(RegisterUiEvent.HideDatePicker) }) {
-                Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    ) { DatePicker(state = datePickerState) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,15 +128,7 @@ fun RegisterBody(
             onEvent(RegisterUiEvent.UserMessageShown)
         }
     }
-    val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        cursorColor = MaterialTheme.colorScheme.primary,
-        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
-    )
+    val textFieldColors = eliteCutTextFieldColors()
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
@@ -246,16 +208,16 @@ fun RegisterBody(
             )
             Spacer(modifier = Modifier.height(12.dp))
             PasswordFieldSection(
-                label = "Contraseña", value = state.password, isVisible = state.isPasswordVisible,
-                testTag = "input_password", supportingLength = state.password.length,
+                config = PasswordFieldConfig(label = "Contraseña", testTag = "input_password", supportingLength = state.password.length),
+                value = state.password, isVisible = state.isPasswordVisible,
                 onValueChange = { onEvent(RegisterUiEvent.OnPasswordChange(InputValidation.limitLength(it, 30))) },
                 onToggleVisibility = { onEvent(RegisterUiEvent.TogglePasswordVisibility) },
                 colors = textFieldColors
             )
             Spacer(modifier = Modifier.height(12.dp))
             PasswordFieldSection(
-                label = "Confirmar", value = state.confirmarPassword, isVisible = state.isConfirmarPasswordVisible,
-                testTag = "input_confirmar", supportingLength = state.confirmarPassword.length,
+                config = PasswordFieldConfig(label = "Confirmar", testTag = "input_confirmar", supportingLength = state.confirmarPassword.length),
+                value = state.confirmarPassword, isVisible = state.isConfirmarPasswordVisible,
                 onValueChange = { onEvent(RegisterUiEvent.OnConfirmarPasswordChange(InputValidation.limitLength(it, 30))) },
                 onToggleVisibility = { onEvent(RegisterUiEvent.ToggleConfirmarPasswordVisibility) },
                 colors = textFieldColors
@@ -283,7 +245,10 @@ fun RegisterBody(
             Spacer(modifier = Modifier.height(24.dp))
         }
         if (state.showDatePicker) {
-            FechaPickerDialog(onEvent = onEvent)
+            FutureDatePickerDialog(
+                onDateSelected = { onEvent(RegisterUiEvent.OnFechaIngresoChange(it)) },
+                onDismiss = { onEvent(RegisterUiEvent.HideDatePicker) }
+            )
         }
     }
 }
