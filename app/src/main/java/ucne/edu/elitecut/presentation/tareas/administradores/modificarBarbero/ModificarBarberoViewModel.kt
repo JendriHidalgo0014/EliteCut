@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
 import ucne.edu.elitecut.domain.model.Barbero
-import ucne.edu.elitecut.domain.model.ImagenCorte
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.ActualizarBarberoUseCase
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.GetBarberoUseCase
 import ucne.edu.elitecut.domain.validation.upsertBarbero
 import ucne.edu.elitecut.presentation.tareas.administradores.nuevoBarbero.GaleriaSlot
+import ucne.edu.elitecut.presentation.utils.mapGaleriaToImagenCorte
+import ucne.edu.elitecut.presentation.utils.updateGaleriaNombre
+import ucne.edu.elitecut.presentation.utils.updateGaleriaUrl
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,7 +28,6 @@ class ModificarBarberoViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val barberoId: Int = savedStateHandle["barberoId"] ?: 0
-
     private val _state = MutableStateFlow(ModificarBarberoUiState(isLoading = true, barberoId = barberoId))
     val state: StateFlow<ModificarBarberoUiState> = _state.asStateFlow()
 
@@ -40,20 +41,8 @@ class ModificarBarberoViewModel @Inject constructor(
             is ModificarBarberoUiEvent.OnTelefonoChange -> _state.update { it.copy(telefono = event.telefono) }
             is ModificarBarberoUiEvent.OnFotoUrlChange -> _state.update { it.copy(fotoUrl = event.fotoUrl) }
             is ModificarBarberoUiEvent.OnDisponibleChange -> _state.update { it.copy(disponible = event.disponible) }
-            is ModificarBarberoUiEvent.OnGaleriaUrlChange -> {
-                _state.update {
-                    val slots = it.galeriaSlots.toMutableList()
-                    slots[event.index] = slots[event.index].copy(url = event.url)
-                    it.copy(galeriaSlots = slots)
-                }
-            }
-            is ModificarBarberoUiEvent.OnGaleriaNombreChange -> {
-                _state.update {
-                    val slots = it.galeriaSlots.toMutableList()
-                    slots[event.index] = slots[event.index].copy(nombreEstilo = event.nombre)
-                    it.copy(galeriaSlots = slots)
-                }
-            }
+            is ModificarBarberoUiEvent.OnGaleriaUrlChange -> _state.update { it.copy(galeriaSlots = updateGaleriaUrl(it.galeriaSlots, event.index, event.url)) }
+            is ModificarBarberoUiEvent.OnGaleriaNombreChange -> _state.update { it.copy(galeriaSlots = updateGaleriaNombre(it.galeriaSlots, event.index, event.nombre)) }
             is ModificarBarberoUiEvent.GuardarCambios -> guardar()
             is ModificarBarberoUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
         }
@@ -84,21 +73,13 @@ class ModificarBarberoViewModel @Inject constructor(
 
     private fun guardar() = viewModelScope.launch {
         val current = _state.value
-
         val validation = upsertBarbero(current.nombre, current.edad, current.especialidad, current.telefono)
         if (!validation.isValid) {
             _state.update { it.copy(userMessage = validation.error) }
             return@launch
         }
-
         _state.update { it.copy(isLoading = true) }
-
-        val galeriaCortes = current.galeriaSlots
-            .filter { it.url.isNotBlank() }
-            .mapIndexed { index, slot ->
-                ImagenCorte(imagenUrl = slot.url, nombreEstilo = slot.nombreEstilo.ifBlank { null }, orden = index)
-            }
-
+        val galeriaCortes = mapGaleriaToImagenCorte(current.galeriaSlots)
         val barbero = Barbero(
             id = current.localId, remoteId = current.barberoId,
             nombre = current.nombre, edad = current.edad.toInt(),
@@ -106,7 +87,6 @@ class ModificarBarberoViewModel @Inject constructor(
             fotoUrl = current.fotoUrl.ifBlank { null }, disponible = current.disponible,
             galeriaCortes = galeriaCortes
         )
-
         when (val result = actualizarBarberoUseCase(barberoId, barbero)) {
             is Resource.Success -> _state.update { it.copy(isLoading = false, barberoGuardado = true, userMessage = "Barbero actualizado") }
             is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al actualizar") }

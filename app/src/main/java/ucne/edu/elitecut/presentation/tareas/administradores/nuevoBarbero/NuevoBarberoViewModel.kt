@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ucne.edu.elitecut.data.remote.Resource
-import ucne.edu.elitecut.domain.model.ImagenCorte
 import ucne.edu.elitecut.domain.usecase.BarberoUseCase.CrearBarberoUseCase
 import ucne.edu.elitecut.domain.validation.upsertBarbero
+import ucne.edu.elitecut.presentation.utils.mapGaleriaToImagenCorte
+import ucne.edu.elitecut.presentation.utils.updateGaleriaNombre
+import ucne.edu.elitecut.presentation.utils.updateGaleriaUrl
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,20 +31,8 @@ class NuevoBarberoViewModel @Inject constructor(
             is NuevoBarberoUiEvent.OnEspecialidadChange -> _state.update { it.copy(especialidad = event.especialidad) }
             is NuevoBarberoUiEvent.OnTelefonoChange -> _state.update { it.copy(telefono = event.telefono) }
             is NuevoBarberoUiEvent.OnFotoUrlChange -> _state.update { it.copy(fotoUrl = event.fotoUrl) }
-            is NuevoBarberoUiEvent.OnGaleriaUrlChange -> {
-                _state.update {
-                    val slots = it.galeriaSlots.toMutableList()
-                    slots[event.index] = slots[event.index].copy(url = event.url)
-                    it.copy(galeriaSlots = slots)
-                }
-            }
-            is NuevoBarberoUiEvent.OnGaleriaNombreChange -> {
-                _state.update {
-                    val slots = it.galeriaSlots.toMutableList()
-                    slots[event.index] = slots[event.index].copy(nombreEstilo = event.nombre)
-                    it.copy(galeriaSlots = slots)
-                }
-            }
+            is NuevoBarberoUiEvent.OnGaleriaUrlChange -> _state.update { it.copy(galeriaSlots = updateGaleriaUrl(it.galeriaSlots, event.index, event.url)) }
+            is NuevoBarberoUiEvent.OnGaleriaNombreChange -> _state.update { it.copy(galeriaSlots = updateGaleriaNombre(it.galeriaSlots, event.index, event.nombre)) }
             is NuevoBarberoUiEvent.CrearBarbero -> crear()
             is NuevoBarberoUiEvent.UserMessageShown -> _state.update { it.copy(userMessage = null) }
         }
@@ -50,32 +40,20 @@ class NuevoBarberoViewModel @Inject constructor(
 
     private fun crear() = viewModelScope.launch {
         val current = _state.value
-
         val validation = upsertBarbero(current.nombre, current.edad, current.especialidad, current.telefono)
         if (!validation.isValid) {
             _state.update { it.copy(userMessage = validation.error) }
             return@launch
         }
-
         _state.update { it.copy(isLoading = true) }
-
-        val galeriaCortes = current.galeriaSlots
-            .filter { it.url.isNotBlank() }
-            .mapIndexed { index, slot ->
-                ImagenCorte(imagenUrl = slot.url, nombreEstilo = slot.nombreEstilo.ifBlank { null }, orden = index)
-            }
-
+        val galeriaCortes = mapGaleriaToImagenCorte(current.galeriaSlots)
         when (val result = crearBarberoUseCase(
             current.nombre, current.edad.toInt(), current.especialidad,
             current.telefono, current.fotoUrl.ifBlank { null },
             galeriaCortes.ifEmpty { null }
         )) {
-            is Resource.Success -> {
-                _state.update { it.copy(isLoading = false, barberoCreado = true, userMessage = "Barbero creado exitosamente") }
-            }
-            is Resource.Error -> {
-                _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al crear barbero") }
-            }
+            is Resource.Success -> _state.update { it.copy(isLoading = false, barberoCreado = true, userMessage = "Barbero creado exitosamente") }
+            is Resource.Error -> _state.update { it.copy(isLoading = false, userMessage = result.message ?: "Error al crear barbero") }
             is Resource.Loading -> Unit
         }
     }

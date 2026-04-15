@@ -25,20 +25,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import ucne.edu.elitecut.domain.model.Barbero
 import ucne.edu.elitecut.presentation.tareas.components.AdminBottomBar
+import ucne.edu.elitecut.presentation.utils.eliteCutTextFieldColors
 import ucne.edu.elitecut.ui.theme.MaterialTheme
 
 @Composable
 fun GestionarBarberosScreen(
     viewModel: GestionarBarberosViewModel = hiltViewModel(),
-    onNuevoBarbero: () -> Unit,
-    onEditarBarbero: (Int) -> Unit,
-    onNavigateToDashboard: () -> Unit,
-    onNavigateToCitas: () -> Unit,
-    onNavigateToSoporte: () -> Unit,
-    onNavigateToPerfil: () -> Unit
+    onNuevoBarbero: () -> Unit, onEditarBarbero: (Int) -> Unit,
+    onNavigateToDashboard: () -> Unit, onNavigateToCitas: () -> Unit,
+    onNavigateToSoporte: () -> Unit, onNavigateToPerfil: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-
     val onAdminNavigate: (String) -> Unit = { route ->
         when (route) {
             "dashboard" -> onNavigateToDashboard()
@@ -47,116 +44,58 @@ fun GestionarBarberosScreen(
             "perfil" -> onNavigateToPerfil()
         }
     }
-    GestionarBarberosBody(
-        state,
-        viewModel::onEvent,
-        onNuevoBarbero,
-        onEditarBarbero,
-        onAdminNavigate
-    )
+    GestionarBarberosBody(state, viewModel::onEvent, onNuevoBarbero, onEditarBarbero, onAdminNavigate)
 }
 
 @Composable
 fun GestionarBarberosBody(
-    state: GestionarBarberosUiState,
-    onEvent: (GestionarBarberosUiEvent) -> Unit,
-    onNuevoBarbero: () -> Unit,
-    onEditarBarbero: (Int) -> Unit,
-    onAdminNavigate: (String) -> Unit
+    state: GestionarBarberosUiState, onEvent: (GestionarBarberosUiEvent) -> Unit,
+    onNuevoBarbero: () -> Unit, onEditarBarbero: (Int) -> Unit, onAdminNavigate: (String) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(state.userMessage) {
-        state.userMessage?.let { snackbarHostState.showSnackbar(it);
-            onEvent(GestionarBarberosUiEvent.UserMessageShown) }
+        state.userMessage?.let { snackbarHostState.showSnackbar(it); onEvent(GestionarBarberosUiEvent.UserMessageShown) }
     }
-
     val filtered = if (state.searchQuery.isBlank()) state.barberos
     else state.barberos.filter { it.nombre.contains(state.searchQuery, true) || it.especialidad.contains(state.searchQuery, true) }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) }, containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = onNuevoBarbero,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary) {
+            FloatingActionButton(onClick = onNuevoBarbero, containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
                 Icon(Icons.Default.Add, "Nuevo Barbero")
             }
         },
-        bottomBar = { AdminBottomBar(currentRoute = "barberos",
-            onNavigate = onAdminNavigate)
-        }
+        bottomBar = { AdminBottomBar(currentRoute = "barberos", onNavigate = onAdminNavigate) }
     ) { padding ->
-        Column(
-            modifier = Modifier.padding(padding).fillMaxSize()) {
-
-            Text("Gestionar Barberos",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
-            )
-
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            Text("Gestionar Barberos", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
             OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { onEvent(GestionarBarberosUiEvent.OnSearchChange(it)) },
+                value = state.searchQuery, onValueChange = { onEvent(GestionarBarberosUiEvent.OnSearchChange(it)) },
                 placeholder = { Text("Buscar barbero...", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                leadingIcon = { Icon(Icons.Default.Search, null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("search_bar"),
-                singleLine = true, shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                )
+                singleLine = true, shape = RoundedCornerShape(12.dp), colors = eliteCutTextFieldColors()
             )
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            BarberoListContent(
-                state.isLoading,
-                filtered,
-                onEditarBarbero,
-                onEvent
-            )
+            BarberoListContent(state.isLoading, filtered, onEditarBarbero, onEvent)
         }
     }
 }
 
 @Composable
-private fun BarberoListContent(
-    isLoading: Boolean,
-    barberos: List<Barbero>,
-    onEditarBarbero: (Int) -> Unit,
-    onEvent: (GestionarBarberosUiEvent) -> Unit) {
-
-    Box(
-        modifier = Modifier.fillMaxSize()) {
-
+private fun BarberoListContent(isLoading: Boolean, barberos: List<Barbero>, onEditarBarbero: (Int) -> Unit, onEvent: (GestionarBarberosUiEvent) -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center).testTag("loading"),
-                color = MaterialTheme.colorScheme.primary
-            )
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).testTag("loading"), color = MaterialTheme.colorScheme.primary)
         } else if (barberos.isEmpty()) {
-            Text("No se encontraron barberos",
-                modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text("No se encontraron barberos", modifier = Modifier.align(Alignment.Center), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(barberos, key = { it.id }) { barbero ->
                     AdminBarberoItem(barbero,
                         onEditar = { barbero.remoteId?.let { onEditarBarbero(it) } },
-                        onEliminar = { barbero.remoteId?.let { onEvent(GestionarBarberosUiEvent.EliminarBarbero(it)) } }
-                    )
+                        onEliminar = { barbero.remoteId?.let { onEvent(GestionarBarberosUiEvent.EliminarBarbero(it)) } })
                 }
             }
         }
@@ -166,67 +105,29 @@ private fun BarberoListContent(
 @Composable
 private fun BarberoAvatar(barbero: Barbero) {
     if (barbero.fotoUrl != null) {
-        AsyncImage(model = barbero.fotoUrl,
-            contentDescription = barbero.nombre,
-            modifier = Modifier.size(48.dp).clip(CircleShape),
-            contentScale = ContentScale.Crop)
+        AsyncImage(model = barbero.fotoUrl, contentDescription = barbero.nombre, modifier = Modifier.size(48.dp).clip(CircleShape), contentScale = ContentScale.Crop)
     } else {
-        Box(
-            modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Person, null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(26.dp)
-            )
+        Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+            Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(26.dp))
         }
     }
 }
 
 @Composable
-fun AdminBarberoItem(
-    barbero: Barbero,
-    onEditar: () -> Unit,
-    onEliminar: () -> Unit)
-{
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+fun AdminBarberoItem(barbero: Barbero, onEditar: () -> Unit, onEliminar: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically)
-        {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             BarberoAvatar(barbero)
             Spacer(modifier = Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    barbero.nombre,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    "${barbero.especialidad} · ${barbero.edad} años",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(if (barbero.disponible) "DISPONIBLE" else "NO DISPONIBLE",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (barbero.disponible) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
-                )
+                Text(barbero.nombre, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${barbero.especialidad} · ${barbero.edad} años", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (barbero.disponible) "DISPONIBLE" else "NO DISPONIBLE", style = MaterialTheme.typography.labelSmall,
+                    color = if (barbero.disponible) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
             }
-            IconButton(onClick = onEditar) { Icon(Icons.Default.Edit, "Editar",
-                tint = MaterialTheme.colorScheme.primary)
-            }
-            IconButton(onClick = onEliminar) { Icon(Icons.Default.Delete, "Eliminar",
-                tint = MaterialTheme.colorScheme.error)
-            }
+            IconButton(onClick = onEditar) { Icon(Icons.Default.Edit, "Editar", tint = MaterialTheme.colorScheme.primary) }
+            IconButton(onClick = onEliminar) { Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error) }
         }
     }
 }
@@ -237,25 +138,10 @@ private fun GestionarBarberosPreview() {
     MaterialTheme(darkTheme = true, dynamicColor = false) {
         GestionarBarberosBody(
             state = GestionarBarberosUiState(barberos = listOf(
-                Barbero(
-                    id = "1",
-                    remoteId = 1,
-                    nombre = "Carlos Ruiz",
-                    edad = 28,
-                    especialidad = "Senior Barber",
-                    disponible = true),
-                Barbero(
-                    id = "2",
-                    remoteId = 2,
-                    nombre = "Santi Vera",
-                    edad = 25,
-                    especialidad = "Stylist",
-                    disponible = false)
+                Barbero(id = "1", remoteId = 1, nombre = "Carlos Ruiz", edad = 28, especialidad = "Senior Barber", disponible = true),
+                Barbero(id = "2", remoteId = 2, nombre = "Santi Vera", edad = 25, especialidad = "Stylist", disponible = false)
             )),
-            onEvent = {},
-            onNuevoBarbero = {},
-            onEditarBarbero = {},
-            onAdminNavigate = {}
+            onEvent = {}, onNuevoBarbero = {}, onEditarBarbero = {}, onAdminNavigate = {}
         )
     }
 }
