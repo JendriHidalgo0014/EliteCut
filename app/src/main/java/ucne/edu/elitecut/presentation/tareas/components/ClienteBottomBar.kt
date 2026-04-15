@@ -36,7 +36,8 @@ val clienteBottomNavItems = listOf(
 )
 
 @Composable
-fun ClienteBottomBar(
+internal fun EliteCutNavigationBar(
+    items: List<BottomNavItem>,
     currentRoute: String,
     onNavigate: (String) -> Unit
 ) {
@@ -44,7 +45,7 @@ fun ClienteBottomBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
-        clienteBottomNavItems.forEach { item ->
+        items.forEach { item ->
             val selected = currentRoute == item.route
             NavigationBarItem(
                 selected = selected,
@@ -72,6 +73,14 @@ fun ClienteBottomBar(
             )
         }
     }
+}
+
+@Composable
+fun ClienteBottomBar(
+    currentRoute: String,
+    onNavigate: (String) -> Unit
+) {
+    EliteCutNavigationBar(items = clienteBottomNavItems, currentRoute = currentRoute, onNavigate = onNavigate)
 }
 
 @Preview
