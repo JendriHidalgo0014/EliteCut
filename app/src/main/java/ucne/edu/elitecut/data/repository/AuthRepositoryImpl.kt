@@ -6,6 +6,7 @@ import ucne.edu.elitecut.data.mapper.toDomain
 import ucne.edu.elitecut.data.mapper.toEntity
 import ucne.edu.elitecut.data.remote.RemoteDataSource.AuthRemoteDataSource
 import ucne.edu.elitecut.data.remote.Resource
+import ucne.edu.elitecut.data.remote.dtos.AuthResponseDto
 import ucne.edu.elitecut.data.remote.dtos.LoginRequestDto
 import ucne.edu.elitecut.data.remote.dtos.RegisterRequestDto
 import ucne.edu.elitecut.domain.model.AuthResult
@@ -21,20 +22,21 @@ class AuthRepositoryImpl @Inject constructor(
     private val tokenManager: TokenManager
 ) : AuthRepository {
 
+    private suspend fun handleAuthSuccess(auth: AuthResponseDto): Resource<AuthResult> {
+        tokenManager.saveToken(auth.token)
+        val usuario = auth.usuario.toDomain()
+        tokenManager.saveUserInfo(
+            id = auth.usuario.id, nombre = usuario.nombre,
+            correo = usuario.correo, telefono = usuario.telefono,
+            fechaIngreso = usuario.fechaIngreso, rol = usuario.rol
+        )
+        localDataSource.upsert(auth.usuario.toEntity())
+        return Resource.Success(AuthResult(token = auth.token, usuario = usuario))
+    }
+
     override suspend fun login(correo: String, password: String): Resource<AuthResult> {
         return when (val result = remoteDataSource.login(LoginRequestDto(correo, password))) {
-            is Resource.Success -> {
-                val auth = result.data!!
-                tokenManager.saveToken(auth.token)
-                val usuario = auth.usuario.toDomain()
-                tokenManager.saveUserInfo(
-                    id = auth.usuario.id, nombre = usuario.nombre,
-                    correo = usuario.correo, telefono = usuario.telefono,
-                    fechaIngreso = usuario.fechaIngreso, rol = usuario.rol
-                )
-                localDataSource.upsert(auth.usuario.toEntity())
-                Resource.Success(AuthResult(token = auth.token, usuario = usuario))
-            }
+            is Resource.Success -> handleAuthSuccess(result.data!!)
             is Resource.Error -> Resource.Error(result.message ?: "Error al iniciar sesión")
             else -> Resource.Loading()
         }
@@ -44,21 +46,9 @@ class AuthRepositoryImpl @Inject constructor(
         nombre: String, telefono: String, fechaIngreso: String,
         correo: String, password: String, confirmarPassword: String
     ): Resource<AuthResult> {
-        val request =
-            RegisterRequestDto(nombre, telefono, fechaIngreso, correo, password, confirmarPassword)
+        val request = RegisterRequestDto(nombre, telefono, fechaIngreso, correo, password, confirmarPassword)
         return when (val result = remoteDataSource.register(request)) {
-            is Resource.Success -> {
-                val auth = result.data!!
-                tokenManager.saveToken(auth.token)
-                val usuario = auth.usuario.toDomain()
-                tokenManager.saveUserInfo(
-                    id = auth.usuario.id, nombre = usuario.nombre,
-                    correo = usuario.correo, telefono = usuario.telefono,
-                    fechaIngreso = usuario.fechaIngreso, rol = usuario.rol
-                )
-                localDataSource.upsert(auth.usuario.toEntity())
-                Resource.Success(AuthResult(token = auth.token, usuario = usuario))
-            }
+            is Resource.Success -> handleAuthSuccess(result.data!!)
             is Resource.Error -> Resource.Error(result.message ?: "Error al registrarse")
             else -> Resource.Loading()
         }
@@ -83,6 +73,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun getToken(): String? = tokenManager.getToken()
     override suspend fun saveToken(token: String) = tokenManager.saveToken(token)
+
     override suspend fun saveUserInfo(usuario: Usuario) {
         tokenManager.saveUserInfo(
             id = usuario.remoteId ?: 0, nombre = usuario.nombre,
@@ -90,10 +81,12 @@ class AuthRepositoryImpl @Inject constructor(
             fechaIngreso = usuario.fechaIngreso, rol = usuario.rol
         )
     }
+
     override suspend fun clearSession() {
         tokenManager.clearSession()
         localDataSource.deleteAll()
     }
+
     override suspend fun isLoggedIn(): Boolean = tokenManager.isLoggedIn()
     override suspend fun getUserRole(): String? = tokenManager.getUserRole()
 }
